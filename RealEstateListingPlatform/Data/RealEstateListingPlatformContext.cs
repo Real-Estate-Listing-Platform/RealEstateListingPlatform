@@ -13,7 +13,5 @@ namespace RealEstateListingPlatform.Data
             : base(options)
         {
         }
-
-        public DbSet<RealEstateListingPlatform.Models.Test> Test { get; set; } = default!;
     }
 }
