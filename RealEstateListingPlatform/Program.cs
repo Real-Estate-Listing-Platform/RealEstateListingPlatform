@@ -6,6 +6,15 @@ builder.Services.AddDbContext<RealEstateListingPlatformContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("RealEstateListingPlatformContext") ?? throw new InvalidOperationException("Connection string 'RealEstateListingPlatformContext' not found.")));
 
 // Add services to the container.
+builder.Services.AddHttpClient();
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
+
 builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
@@ -19,7 +28,10 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseStaticFiles();
 app.UseRouting();
+
+app.UseSession();
 
 app.UseAuthorization();
 

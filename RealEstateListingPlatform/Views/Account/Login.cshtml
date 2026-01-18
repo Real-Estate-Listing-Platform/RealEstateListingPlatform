@@ -1,0 +1,33 @@
+@model RealEstateListingPlatform.Models.LoginViewModel
+
+@{
+    ViewData["Title"] = "Log in";
+    Layout = "_AuthLayout";
+}
+
+<div class="auth-toggle">
+    <a href="#" class="active">Login</a>
+    <a asp-action="Register" class="js-auth-switch">Sign Up</a>
+</div>
+
+<form id="account" method="post" class="auth-form">
+    <div asp-validation-summary="ModelOnly" class="text-danger mb-3" role="alert"></div>
+
+    <div class="mb-3">
+        <input asp-for="Email" class="form-control" autocomplete="username" aria-required="true" placeholder="Email Address" />
+        <span asp-validation-for="Email" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <input asp-for="Password" class="form-control" autocomplete="current-password" aria-required="true" placeholder="Password" />
+        <span asp-validation-for="Password" class="text-danger"></span>
+    </div>
+
+    <a href="#" class="forgot-password">Forgot Password?</a>
+
+    <button id="login-submit" type="submit" class="btn btn-auth-primary">Log In</button>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
