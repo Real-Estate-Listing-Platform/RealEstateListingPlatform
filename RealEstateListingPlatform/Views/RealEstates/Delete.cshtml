@@ -1,0 +1,100 @@
+﻿@model RealEstateListingPlatform.Models.Listing
+
+@{
+    ViewData["Title"] = "Delete Listing";
+}
+
+<div class="container mt-4">
+
+    <h2 class="text-danger fw-bold mb-2">Delete Listing</h2>
+    <p class="text-muted">
+        You can permanently delete this listing or hide it instead.
+    </p>
+
+    <!-- Listing summary -->
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+            <h5 class="fw-bold mb-1">@Model.Title</h5>
+            <p class="mb-1">@Model.PropertyType • @Model.TransactionType</p>
+            <p class="mb-1">
+                <strong>Price:</strong>
+                @String.Format("{0:N0}", Model.Price) VND
+            </p>
+            <p class="text-muted mb-0">
+                @Model.HouseNumber, @Model.StreetName,
+                @Model.Ward, @Model.Area, @Model.City
+            </p>
+        </div>
+    </div>
+
+    <!-- Action buttons -->
+    <button class="btn btn-danger"
+            data-bs-toggle="modal"
+            data-bs-target="#confirmDeleteModal">
+        Delete
+    </button>
+
+    <a asp-action="Index" class="btn btn-secondary ms-2">
+        Back
+    </a>
+
+    <!-- Hidden delete form -->
+    <form id="deleteForm" asp-action="Delete" method="post">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Id" />
+    </form>
+</div>
+
+<!-- CONFIRM MODAL -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title text-danger">Confirm action</h5>
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <p>What would you like to do?</p>
+                <ul class="mb-0">
+                    <li><strong>Delete permanently</strong> – cannot be undone</li>
+                    <li><strong>Hide listing</strong> – change status to <code>Hidden</code></li>
+                </ul>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-secondary"
+                        data-bs-dismiss="modal">
+                    Cancel
+                </button>
+
+                <button class="btn btn-warning"
+                        onclick="hideListing()">
+                    Hide Listing
+                </button>
+
+                <button class="btn btn-danger"
+                        onclick="confirmDelete()">
+                    Delete Permanently
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function confirmDelete() {
+            document.getElementById("deleteForm").submit();
+        }
+
+        function hideListing() {
+            const id = "@Model.Id";
+            window.location.href = `/Listing/Edit/${id}?autoHide=true`;
+        }
+    </script>
+}

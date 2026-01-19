@@ -14,6 +14,6 @@ namespace RealEstateListingPlatform.Data
         {
         }
 
-        public DbSet<RealEstateListingPlatform.Models.Test> Test { get; set; } = default!;
+        public DbSet<RealEstateListingPlatform.Models.Listing> Listing { get; set; } = default!;
     }
 }
