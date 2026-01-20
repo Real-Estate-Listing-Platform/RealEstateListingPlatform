@@ -1,5 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using RealEstateListingPlatform.Data;
 using RealEstateListingPlatform.Models;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace RealEstateListingPlatform.Controllers
 {
@@ -7,35 +11,78 @@ namespace RealEstateListingPlatform.Controllers
     [ApiController]
     public class AuthController : ControllerBase
     {
-        [HttpPost("register")]
-        public IActionResult Register([FromBody] RegisterViewModel model)
+        private readonly RealEstateListingPlatformContext _context;
+
+        public AuthController(RealEstateListingPlatformContext context)
         {
-            if (ModelState.IsValid)
+            _context = context;
+        }
+
+        [HttpPost("register")]
+        public async Task<IActionResult> Register([FromBody] RegisterViewModel model)
+        {
+            if (!ModelState.IsValid)
             {
-                // Simulate database saving...
-                return Ok(new { message = "Registration successful" });
+                return BadRequest(ModelState);
             }
-            return BadRequest(ModelState);
+
+            // Check if email already exists
+            if (await _context.Users.AnyAsync(u => u.Email == model.Email))
+            {
+                ModelState.AddModelError("Email", "Email is already taken.");
+                return BadRequest(ModelState);
+            }
+
+            // Create User entity
+            var user = new User
+            {
+                Id = Guid.NewGuid(),
+                DisplayName = model.FullName,
+                Email = model.Email,
+                Phone = model.PhoneNumber,
+                Role = "Seeker", // Default role
+                PasswordHash = HashPassword(model.Password)
+            };
+
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Registration successful" });
         }
 
         [HttpPost("login")]
-        public IActionResult Login([FromBody] LoginViewModel model)
+        public async Task<IActionResult> Login([FromBody] LoginViewModel model)
         {
-            // Simulate user validation
-            // For testing: Accept any login or specific credentials
-            if (model.Email == "admin@example.com" && model.Password == "Password123!")
+            if (!ModelState.IsValid)
             {
-                // Return a dummy JWT token
-                return Ok(new { token = "dummy-jwt-token-for-testing-purposes" });
+                return BadRequest(ModelState);
             }
 
-            // Also allow any login for easy testing if not specific
-            if (ModelState.IsValid)
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == model.Email);
+            if (user == null || !VerifyPassword(model.Password, user.PasswordHash))
             {
-                 return Ok(new { token = $"token-for-{model.Email}" });
+                return Unauthorized("Invalid email or password.");
             }
 
-            return Unauthorized("Invalid credentials");
+            // Generate a real token ideally, but for now a simple string with info
+            // In a real app, use JWT library to sign this
+            var token = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{user.Email}:{user.Id}:{DateTime.Now.Ticks}"));
+
+            return Ok(new { token = token, fullName = user.DisplayName });
+        }
+
+        // Simple helper for demo purposes. Use ASP.NET Core Identity's PasswordHasher in production.
+        private string HashPassword(string password)
+        {
+            using var sha256 = SHA256.Create();
+            var bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
+            return Convert.ToBase64String(bytes);
+        }
+
+        private bool VerifyPassword(string inputPassword, string storedHash)
+        {
+            var inputHash = HashPassword(inputPassword);
+            return inputHash == storedHash;
         }
     }
 }

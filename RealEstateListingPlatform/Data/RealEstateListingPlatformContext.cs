@@ -13,5 +13,7 @@ namespace RealEstateListingPlatform.Data
             : base(options)
         {
         }
+
+        public DbSet<RealEstateListingPlatform.Models.User> Users { get; set; } = default!;
     }
 }

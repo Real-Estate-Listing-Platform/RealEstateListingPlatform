@@ -18,8 +18,9 @@
         <span asp-validation-for="Email" class="text-danger"></span>
     </div>
 
-    <div class="mb-3">
-        <input asp-for="Password" class="form-control" autocomplete="current-password" aria-required="true" placeholder="Password" />
+    <div class="mb-3 position-relative">
+        <input asp-for="Password" class="form-control password-input" autocomplete="current-password" aria-required="true" placeholder="Password" />
+        <span class="password-toggle-icon"><i class="bi bi-eye"></i></span>
         <span asp-validation-for="Password" class="text-danger"></span>
     </div>
 
@@ -30,4 +31,21 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        $(document).ready(function() {
+            // Password Toggle
+            $('.password-toggle-icon').click(function() {
+                var input = $(this).siblings('input');
+                var icon = $(this).find('i');
+                
+                if (input.attr('type') === 'password') {
+                    input.attr('type', 'text');
+                    icon.removeClass('bi-eye').addClass('bi-eye-slash');
+                } else {
+                    input.attr('type', 'password');
+                    icon.removeClass('bi-eye-slash').addClass('bi-eye');
+                }
+            });
+        });
+    </script>
 }

@@ -53,7 +53,38 @@ namespace RealEstateListingPlatform.Controllers
                 else
                 {
                     var errorContent = await response.Content.ReadAsStringAsync();
-                    ModelState.AddModelError(string.Empty, $"Registration failed: {errorContent}");
+                    try
+                    {
+                        using var doc = JsonDocument.Parse(errorContent);
+                        if (doc.RootElement.ValueKind == JsonValueKind.Object)
+                        {
+                            // Try to parse standard ModelState errors (e.g. { "Email": ["Error 1"] })
+                            foreach (var property in doc.RootElement.EnumerateObject())
+                            {
+                                if (property.Value.ValueKind == JsonValueKind.Array)
+                                {
+                                    foreach (var error in property.Value.EnumerateArray())
+                                    {
+                                        ModelState.AddModelError(property.Name, error.GetString() ?? "Unknown error");
+                                    }
+                                }
+                                else if (property.Value.ValueKind == JsonValueKind.String)
+                                {
+                                     // Handle single error messages like { "message": "Error..." }
+                                     ModelState.AddModelError(string.Empty, property.Value.GetString() ?? "Unknown error");
+                                }
+                            }
+                        }
+                        else 
+                        {
+                             ModelState.AddModelError(string.Empty, "Registration failed.");
+                        }
+                    }
+                    catch
+                    {
+                        // Fallback if not JSON
+                        ModelState.AddModelError(string.Empty, "Registration failed. Please try again.");
+                    }
                 }
             }
             catch (Exception ex)
