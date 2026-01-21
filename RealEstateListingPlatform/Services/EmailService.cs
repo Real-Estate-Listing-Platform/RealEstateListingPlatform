@@ -24,7 +24,10 @@ namespace RealEstateListingPlatform.Services
             email.Body = new TextPart(TextFormat.Html) { Text = body };
 
             using var smtp = new SmtpClient();
-            await smtp.ConnectAsync(_configuration["EmailSettings:Host"], int.Parse(_configuration["EmailSettings:Port"]), SecureSocketOptions.StartTls);
+            var host = _configuration["EmailSettings:Host"] ?? throw new InvalidOperationException("EmailSettings:Host is missing.");
+            var portStr = _configuration["EmailSettings:Port"] ?? throw new InvalidOperationException("EmailSettings:Port is missing.");
+            var port = int.Parse(portStr);
+            await smtp.ConnectAsync(host, port, SecureSocketOptions.StartTls);
             await smtp.AuthenticateAsync(_configuration["EmailSettings:Username"], _configuration["EmailSettings:Password"]);
             await smtp.SendAsync(email);
             await smtp.DisconnectAsync(true);

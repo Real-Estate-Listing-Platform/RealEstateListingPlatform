@@ -4,6 +4,7 @@ namespace BLL.Services
 {
     public interface IUserService
     {
+        Task<List<User>> GetUsers();
         Task<User?> Login(string email, string password);
         Task<User> Register(string fullName, string email, string password, string phone);
         Task<bool> VerifyEmail(string email);

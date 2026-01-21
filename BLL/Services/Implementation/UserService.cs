@@ -15,10 +15,15 @@ namespace BLL.Services.Implementation
             _userRepository = userRepository;
         }
 
+        public async Task<List<User>> GetUsers()
+        {
+            return await _userRepository.GetUsers();
+        }
+
         public async Task<User?> Login(string email, string password)
         {
             var user = await _userRepository.GetUserByEmail(email);
-            if (user == null || !VerifyPassword(password, user.PasswordHash))
+            if (user == null || string.IsNullOrEmpty(user.PasswordHash) || !VerifyPassword(password, user.PasswordHash))
             {
                 return null;
             }

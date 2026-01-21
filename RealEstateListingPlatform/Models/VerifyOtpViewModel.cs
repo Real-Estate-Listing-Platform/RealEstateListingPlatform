@@ -6,11 +6,11 @@ namespace RealEstateListingPlatform.Models
     {
         [Required]
         [EmailAddress]
-        public string Email { get; set; }
+        public string Email { get; set; } = string.Empty;
 
         [Required]
         [StringLength(6, MinimumLength = 6, ErrorMessage = "OTP must be 6 digits.")]
         [Display(Name = "Verification Code")]
-        public string OtpCode { get; set; }
+        public string OtpCode { get; set; } = string.Empty;
     }
 }
