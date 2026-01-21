@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using Microsoft.EntityFrameworkCore;
 
 namespace DAL.Models;
 
+[PrimaryKey(nameof(UserId), nameof(ListingId))]
 public partial class Favorite
 {
     public Guid UserId { get; set; }

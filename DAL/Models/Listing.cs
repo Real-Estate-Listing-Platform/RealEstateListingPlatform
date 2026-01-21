@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Microsoft.EntityFrameworkCore;
 
 namespace DAL.Models;
 
@@ -17,6 +18,7 @@ public partial class Listing
 
     public string? PropertyType { get; set; }
 
+    [Precision(18, 2)]
     public decimal Price { get; set; }
 
     public string? StreetName { get; set; }
@@ -31,8 +33,10 @@ public partial class Listing
 
     public string? HouseNumber { get; set; }
 
+    [Precision(9, 6)]
     public decimal? Latitude { get; set; }
 
+    [Precision(9, 6)]
     public decimal? Longitude { get; set; }
 
     public int? Bedrooms { get; set; }
