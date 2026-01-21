@@ -1,0 +1,75 @@
+﻿@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Bảng điều khiển";
+}
+
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Dashboard</h1>
+</div>
+
+<!-- Thống kê nhanh -->
+<div class="row mt-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white mb-4">
+            <div class="card-body">
+                <h5 class="card-title">150</h5>
+                <p class="card-text">Tổng tin đăng</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white mb-4">
+            <div class="card-body">
+                <h5 class="card-title">45</h5>
+                <p class="card-text">Tin đang chờ duyệt</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-dark mb-4">
+            <div class="card-body">
+                <h5 class="card-title">1,200</h5>
+                <p class="card-text">Lượt xem hôm nay</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-danger text-white mb-4">
+            <div class="card-body">
+                <h5 class="card-title">12</h5>
+                <p class="card-text">Báo cáo vi phạm</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<h2 class="mt-4">Tin đăng mới nhất</h2>
+<div class="table-responsive">
+    <table class="table table-striped table-sm">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Tiêu đề</th>
+                <th>Giá</th>
+                <th>Người đăng</th>
+                <th>Ngày đăng</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>#101</td>
+                <td>Căn hộ cao cấp Vinhomes</td>
+                <td>3.5 Tỷ</td>
+                <td>Nguyễn Văn A</td>
+                <td>12/10/2023</td>
+            </tr>
+            <tr>
+                <td>#102</td>
+                <td>Nhà phố Quận 7 - 4 lầu</td>
+                <td>8.2 Tỷ</td>
+                <td>Trần Thị B</td>
+                <td>11/10/2023</td>
+            </tr>
+        </tbody>
+    </table>
+</div>

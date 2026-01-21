@@ -1,0 +1,54 @@
+﻿@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Quản lý bất động sản";
+}
+
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Danh sách bất động sản</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <button type="button" class="btn btn-sm btn-outline-primary">
+            <i class="fas fa-plus"></i> Thêm tin mới
+        </button>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <table class="table table-hover">
+            <thead class="table-light">
+                <tr>
+                    <th>Ảnh</th>
+                    <th>Tên tài sản</th>
+                    <th>Khu vực</th>
+                    <th>Giá</th>
+                    <th>Trạng thái</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><img src="https://via.placeholder.com/50" class="rounded" /></td>
+                    <td>Biệt thự sân vườn Thủ Đức</td>
+                    <td>TP. Thủ Đức, HCM</td>
+                    <td>15 Tỷ</td>
+                    <td><span class="badge bg-success">Đã duyệt</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-info text-white"><i class="fas fa-edit"></i></button>
+                        <button class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>
+                <tr>
+                    <td><img src="https://via.placeholder.com/50" class="rounded" /></td>
+                    <td>Đất nền Long An</td>
+                    <td>Cần Giuộc, Long An</td>
+                    <td>1.2 Tỷ</td>
+                    <td><span class="badge bg-warning">Chờ duyệt</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-info text-white"><i class="fas fa-edit"></i></button>
+                        <button class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
