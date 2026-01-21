@@ -1,9 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.14.36908.2 d17.14
+VisualStudioVersion = 17.14.36908.2
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RealEstateListingPlatform", "RealEstateListingPlatform\RealEstateListingPlatform.csproj", "{90DA7F6A-A0B9-40BD-AB89-EE4BBD27BEBB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BLL", "BLL\BLL.csproj", "{32082D6D-F041-4AD5-8E15-ECDBA86768C7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DAL", "DAL\DAL.csproj", "{A889B7E1-0AC2-4ABB-A83D-385267EAF1AE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +19,14 @@ Global
 		{90DA7F6A-A0B9-40BD-AB89-EE4BBD27BEBB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{90DA7F6A-A0B9-40BD-AB89-EE4BBD27BEBB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{90DA7F6A-A0B9-40BD-AB89-EE4BBD27BEBB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{32082D6D-F041-4AD5-8E15-ECDBA86768C7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{32082D6D-F041-4AD5-8E15-ECDBA86768C7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{32082D6D-F041-4AD5-8E15-ECDBA86768C7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{32082D6D-F041-4AD5-8E15-ECDBA86768C7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A889B7E1-0AC2-4ABB-A83D-385267EAF1AE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A889B7E1-0AC2-4ABB-A83D-385267EAF1AE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A889B7E1-0AC2-4ABB-A83D-385267EAF1AE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A889B7E1-0AC2-4ABB-A83D-385267EAF1AE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
