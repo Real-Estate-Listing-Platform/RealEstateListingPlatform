@@ -1,9 +1,19 @@
-﻿using DAL.Models;
+using DAL.Models;
 
 namespace BLL.Services
 {
     public interface IUserService
     {
-        public Task<List<User>> GetUsers();
+        Task<User?> Login(string email, string password);
+        Task<User> Register(string fullName, string email, string password, string phone);
+        Task<bool> VerifyEmail(string email);
+        Task<bool> ResetPassword(string email, string newPassword);
+        Task<User?> GetUserByEmail(string email);
+        Task<bool> IsEmailRegistered(string email);
+        Task UpdateUser(User user);
+        Task DeleteUser(User user);
+        
+        string HashPassword(string password);
+        bool VerifyPassword(string password, string hash);
     }
 }

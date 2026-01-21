@@ -1,9 +1,16 @@
-﻿using DAL.Models;
+using DAL.Models;
 
 namespace DAL.Repositories
 {
     public interface IUserRepository
     {
-        public Task<List<User>> GetUsers();
+        Task<List<User>> GetUsers();
+        Task<User?> GetUserByEmail(string email);
+        Task<User?> GetUserById(Guid id);
+        Task AddUser(User user);
+        Task UpdateUser(User user);
+        Task DeleteUser(User user);
+        Task<bool> UserExists(string email);
+        IQueryable<User> GetUsersQueryable();
     }
 }

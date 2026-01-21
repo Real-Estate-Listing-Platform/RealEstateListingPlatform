@@ -1,0 +1,51 @@
+@model RealEstateListingPlatform.Models.LoginViewModel
+
+@{
+    ViewData["Title"] = "Log in";
+    Layout = "_AuthLayout";
+}
+
+<div class="auth-toggle">
+    <a href="#" class="active">Login</a>
+    <a asp-action="Register" class="js-auth-switch">Sign Up</a>
+</div>
+
+<form id="account" method="post" class="auth-form">
+    <div asp-validation-summary="ModelOnly" class="text-danger mb-3" role="alert"></div>
+
+    <div class="mb-2">
+        <input asp-for="Email" class="form-control" autocomplete="username" aria-required="true" placeholder="Email Address" />
+        <span asp-validation-for="Email" class="text-danger"></span>
+    </div>
+
+    <div class="mb-2 position-relative">
+        <input asp-for="Password" class="form-control password-input" autocomplete="current-password" aria-required="true" placeholder="Password" />
+        <span class="password-toggle-icon"><i class="bi bi-eye"></i></span>
+        <span asp-validation-for="Password" class="text-danger"></span>
+    </div>
+
+    <a asp-action="ForgotPassword" class="forgot-password">Forgot Password?</a>
+
+    <button id="login-submit" type="submit" class="btn btn-auth-primary">Log In</button>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        $(document).ready(function() {
+            // Password Toggle
+            $('.password-toggle-icon').click(function() {
+                var input = $(this).siblings('input');
+                var icon = $(this).find('i');
+                
+                if (input.attr('type') === 'password') {
+                    input.attr('type', 'text');
+                    icon.removeClass('bi-eye').addClass('bi-eye-slash');
+                } else {
+                    input.attr('type', 'password');
+                    icon.removeClass('bi-eye-slash').addClass('bi-eye');
+                }
+            });
+        });
+    </script>
+}
