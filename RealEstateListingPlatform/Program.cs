@@ -1,12 +1,19 @@
+using BLL.Services;
+using BLL.Services.Implementation;
+using DAL.Models;
+using DAL.Repositories;
+using DAL.Repositories.implementation;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using RealEstateListingPlatform.Data;
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<RealEstateListingPlatformContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("RealEstateListingPlatformContext") ?? throw new InvalidOperationException("Connection string 'RealEstateListingPlatformContext' not found.")));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'RealEstateListingPlatformContext' not found.")));
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IListingService, ListingService>();
+builder.Services.AddScoped<IListingRepository, ListingRepository>();
 
 var app = builder.Build();
 
