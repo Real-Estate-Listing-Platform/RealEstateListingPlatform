@@ -224,6 +224,12 @@ namespace RealEstateListingPlatform.Controllers
 
             if (result.Success)
             {
+                if (string.IsNullOrEmpty(result.Token))
+                {
+                    ModelState.AddModelError(string.Empty, "Login succeeded but token is missing.");
+                    return View(model);
+                }
+
                 // Store token in Cookie
                 var cookieOptions = new CookieOptions
                 {
@@ -233,7 +239,7 @@ namespace RealEstateListingPlatform.Controllers
                     Expires = model.RememberMe ? DateTime.UtcNow.AddDays(7) : null
                 };
 
-                Response.Cookies.Append("JWToken", result.Token, cookieOptions);
+                Response.Cookies.Append("JWToken", result.Token!, cookieOptions);
 
                 return RedirectToAction("Index", "Home");
             }

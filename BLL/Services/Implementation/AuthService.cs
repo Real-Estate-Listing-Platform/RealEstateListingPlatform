@@ -140,38 +140,38 @@ namespace BLL.Services.Implementation
             return new AuthResult { Success = true, Message = "OTP sent successfully." };
         }
 
-        public async Task<AuthResult> VerifyResetOtpAsync(string email, string otpCode)
+        public Task<AuthResult> VerifyResetOtpAsync(string email, string otpCode)
         {
             if (!_memoryCache.TryGetValue($"RESET_OTP_{email}", out string? storedOtp) || string.IsNullOrWhiteSpace(storedOtp))
             {
-                return new AuthResult { Success = false, Message = "OTP has expired or is invalid." };
+                return Task.FromResult(new AuthResult { Success = false, Message = "OTP has expired or is invalid." });
             }
 
             if (storedOtp != otpCode)
             {
-                return new AuthResult { Success = false, Message = "Invalid OTP code." };
+                return Task.FromResult(new AuthResult { Success = false, Message = "Invalid OTP code." });
             }
 
             var resetToken = Guid.NewGuid().ToString();
             _memoryCache.Set($"RESET_TOKEN_{email}", resetToken, TimeSpan.FromMinutes(10));
             _memoryCache.Remove($"RESET_OTP_{email}");
 
-            return new AuthResult { Success = true, Message = "OTP verified.", Token = resetToken };
+            return Task.FromResult(new AuthResult { Success = true, Message = "OTP verified.", Token = resetToken });
         }
 
-        public Task<AuthResult> ResetPasswordAsync(string email, string token, string newPassword)
+        public async Task<AuthResult> ResetPasswordAsync(string email, string token, string newPassword)
         {
             if (!_memoryCache.TryGetValue($"RESET_TOKEN_{email}", out string? storedToken) || string.IsNullOrWhiteSpace(storedToken))
             {
-                return Task.FromResult(new AuthResult { Success = false, Message = "Reset session expired. Please start over." });
+                return new AuthResult { Success = false, Message = "Reset session expired. Please start over." };
             }
 
             if (storedToken != token)
             {
-                return Task.FromResult(new AuthResult { Success = false, Message = "Invalid token." });
+                return new AuthResult { Success = false, Message = "Invalid token." };
             }
 
-            return ResetPasswordInternalAsync(email, newPassword);
+            return await ResetPasswordInternalAsync(email, newPassword);
         }
 
         private async Task<AuthResult> ResetPasswordInternalAsync(string email, string newPassword)
