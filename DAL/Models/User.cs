@@ -10,7 +10,7 @@ namespace DAL.Models
 
         [Required]
         [StringLength(100)]
-        public string DisplayName { get; set; }
+        public string DisplayName { get; set; } = string.Empty;
 
         [Required]
         [StringLength(20)]
@@ -19,7 +19,7 @@ namespace DAL.Models
         [Required]
         [EmailAddress]
         [StringLength(100)]
-        public string Email { get; set; }
+        public string Email { get; set; } = string.Empty;
 
         [StringLength(20)]
         public string? Phone { get; set; }
