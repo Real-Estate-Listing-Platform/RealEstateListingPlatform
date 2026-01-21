@@ -1,9 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using RealEstateListingPlatform.Data;
+using BLL.Services;
 using RealEstateListingPlatform.Models;
-using System.Security.Cryptography;
-using System.Text;
 
 namespace RealEstateListingPlatform.Controllers
 {
@@ -11,78 +8,109 @@ namespace RealEstateListingPlatform.Controllers
     [ApiController]
     public class AuthController : ControllerBase
     {
-        private readonly RealEstateListingPlatformContext _context;
+        private readonly IAuthService _authService;
 
-        public AuthController(RealEstateListingPlatformContext context)
+        public AuthController(IAuthService authService)
         {
-            _context = context;
+            _authService = authService;
         }
 
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterViewModel model)
         {
-            if (!ModelState.IsValid)
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var result = await _authService.RegisterAsync(model.FullName, model.Email, model.Password, model.PhoneNumber);
+            
+            if (result.Success)
             {
-                return BadRequest(ModelState);
+                return Ok(new { message = result.Message, email = result.Email });
             }
+            return BadRequest(new { message = result.Message });
+        }
 
-            // Check if email already exists
-            if (await _context.Users.AnyAsync(u => u.Email == model.Email))
+        [HttpPost("verify-otp")]
+        public async Task<IActionResult> VerifyOtp([FromBody] VerifyOtpViewModel model)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var result = await _authService.VerifyOtpAsync(model.Email, model.OtpCode);
+
+            if (result.Success)
             {
-                ModelState.AddModelError("Email", "Email is already taken.");
-                return BadRequest(ModelState);
+                return Ok(new { message = result.Message });
             }
+            return BadRequest(new { message = result.Message });
+        }
 
-            // Create User entity
-            var user = new User
+        [HttpPost("resend-otp")]
+        public async Task<IActionResult> ResendOtp([FromBody] ResendOtpViewModel model)
+        {
+            if (string.IsNullOrEmpty(model.Email)) return BadRequest(new { message = "Email is required." });
+
+            var result = await _authService.ResendOtpAsync(model.Email);
+
+            if (result.Success)
             {
-                Id = Guid.NewGuid(),
-                DisplayName = model.FullName,
-                Email = model.Email,
-                Phone = model.PhoneNumber,
-                Role = "Seeker", // Default role
-                PasswordHash = HashPassword(model.Password)
-            };
+                return Ok(new { message = result.Message });
+            }
+            return BadRequest(new { message = result.Message });
+        }
 
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordViewModel model)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            return Ok(new { message = "Registration successful" });
+            var result = await _authService.ForgotPasswordAsync(model.Email);
+
+            if (result.Success)
+            {
+                return Ok(new { message = result.Message });
+            }
+            return BadRequest(new { message = result.Message });
+        }
+
+        [HttpPost("verify-reset-otp")]
+        public async Task<IActionResult> VerifyResetOtp([FromBody] VerifyOtpViewModel model)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var result = await _authService.VerifyResetOtpAsync(model.Email, model.OtpCode);
+
+            if (result.Success)
+            {
+                return Ok(new { token = result.Token, message = result.Message });
+            }
+            return BadRequest(new { message = result.Message });
+        }
+
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordViewModel model)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var result = await _authService.ResetPasswordAsync(model.Email, model.Token, model.NewPassword);
+
+            if (result.Success)
+            {
+                return Ok(new { message = result.Message });
+            }
+            return BadRequest(new { message = result.Message });
         }
 
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginViewModel model)
         {
-            if (!ModelState.IsValid)
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var result = await _authService.LoginAsync(model.Email, model.Password);
+
+            if (result.Success)
             {
-                return BadRequest(ModelState);
+                return Ok(new { token = result.Token, fullName = result.Email }); // Email prop used for DisplayName in AuthService
             }
-
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == model.Email);
-            if (user == null || !VerifyPassword(model.Password, user.PasswordHash))
-            {
-                return Unauthorized("Invalid email or password.");
-            }
-
-            // Generate a real token ideally, but for now a simple string with info
-            // In a real app, use JWT library to sign this
-            var token = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{user.Email}:{user.Id}:{DateTime.Now.Ticks}"));
-
-            return Ok(new { token = token, fullName = user.DisplayName });
-        }
-
-        // Simple helper for demo purposes. Use ASP.NET Core Identity's PasswordHasher in production.
-        private string HashPassword(string password)
-        {
-            using var sha256 = SHA256.Create();
-            var bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
-            return Convert.ToBase64String(bytes);
-        }
-
-        private bool VerifyPassword(string inputPassword, string storedHash)
-        {
-            var inputHash = HashPassword(inputPassword);
-            return inputHash == storedHash;
+            return Unauthorized(result.Message);
         }
     }
 }

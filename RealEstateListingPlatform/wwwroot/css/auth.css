@@ -8,6 +8,7 @@ html, body {
 .auth-body {
     font-family: 'Poppins', sans-serif;
     overflow-x: hidden;
+    margin-bottom: 0 !important; /* Override site.css default margin */
 }
 
 .h-100vh {

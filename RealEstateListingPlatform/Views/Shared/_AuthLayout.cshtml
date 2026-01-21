@@ -29,6 +29,18 @@
                             <span class="fs-4 fw-bold"><i class="bi bi-house-door-fill text-primary"></i> Estately</span>
                         </a>
                     </div>
+                    @if (TempData["SuccessMessage"] != null)
+                    {
+                        <div class="alert alert-success" role="alert">
+                            @TempData["SuccessMessage"]
+                        </div>
+                    }
+                    @if (TempData["ErrorMessage"] != null)
+                    {
+                        <div class="alert alert-danger" role="alert">
+                            @TempData["ErrorMessage"]
+                        </div>
+                    }
                     @RenderBody()
                 </div>
             </div>

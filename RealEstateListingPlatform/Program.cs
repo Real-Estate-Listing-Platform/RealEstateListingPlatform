@@ -1,13 +1,25 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using RealEstateListingPlatform.Data;
+using DAL.Models;
+using DAL.Repositories;
+using DAL.Repositories.Implementation;
+using BLL.Services;
+using BLL.Services.Implementation;
+using RealEstateListingPlatform.Services;
+
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<RealEstateListingPlatformContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("RealEstateListingPlatformContext") ?? throw new InvalidOperationException("Connection string 'RealEstateListingPlatformContext' not found.")));
 
 // Add services to the container.
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddHttpClient();
 builder.Services.AddDistributedMemoryCache();
+builder.Services.AddMemoryCache(); // For OTP caching
+builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddHostedService<UnverifiedUserCleanupService>();
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromMinutes(30);
