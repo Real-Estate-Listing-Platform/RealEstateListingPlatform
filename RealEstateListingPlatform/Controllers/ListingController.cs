@@ -1,44 +1,184 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RealEstateListingPlatform.Data;
 using RealEstateListingPlatform.Models;
+using RealEstateListingPlatform.Services;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace RealEstateListingPlatform.Controllers
 {
+    //public class ListingController : Controller
+    //{
+    //    private readonly RealEstateListingPlatformContext _context;
+
+    //    public ListingController(RealEstateListingPlatformContext context)
+    //    {
+    //        _context = context;
+    //    }
+
+    //    // GET: /Listing
+    //    public async Task<IActionResult> Index()
+    //    {
+    //        var listings = await _context.Listing.AsNoTracking()
+    //            .OrderByDescending(l => l.CreatedAt)
+    //            .ToListAsync();
+
+    //        return View("~/Views/RealEstates/Index.cshtml", listings);
+    //    }
+
+    //    // GET: /Listing/Details/{id}
+    //    public async Task<IActionResult> Details(Guid? id)
+    //    {
+    //        if (id == null) return NotFound();
+
+    //        var listings = await _context.Listing.AsNoTracking()
+    //            .FirstOrDefaultAsync(l => l.Id == id.Value);
+
+    //        if (listings == null) return NotFound();
+
+    //        return View("~/Views/RealEstates/Details.cshtml", listings);
+    //    }
+
+    //    // GET: /Listing/Create
+    //    public IActionResult Create()
+    //    {
+    //        return View("~/Views/RealEstates/Create.cshtml");
+    //    }
+
+    //    // POST: /Listing/Create
+    //    [HttpPost]
+    //    [ValidateAntiForgeryToken]
+    //    public async Task<IActionResult> Create([Bind("ListerId,Title,TransactionType,PropertyType,Price,StreetName,Area,Ward,City,HouseNumber,Latitude,Longitude,Status")] Listing listing)
+    //    {
+    //        if (!ModelState.IsValid) return View("~/Views/RealEstates/Create.cshtml", listing);
+
+    //        listing.Id = listing.Id == Guid.Empty ? Guid.NewGuid() : listing.Id;
+    //        listing.CreatedAt = DateTime.UtcNow.AddHours(7);
+
+    //        _context.Listing.Add(listing);
+    //        await _context.SaveChangesAsync();
+
+    //        return RedirectToAction(nameof(Index));
+    //    }
+
+    //    // GET: /Listing/Edit/{id}
+    //    public async Task<IActionResult> Edit(Guid? id)
+    //    {
+    //        if (id == null) return NotFound();
+
+    //        var listing = await _context.Listing.FindAsync(id.Value);
+    //        if (listing == null) return NotFound();
+
+    //        return View("~/Views/RealEstates/Edit.cshtml", listing);
+    //    }
+
+    //    // POST: /Listing/Edit/{id}
+    //    [HttpPost]
+    //    [ValidateAntiForgeryToken]
+    //    public async Task<IActionResult> Edit(Guid id, [Bind("Id,ListerId,Title,TransactionType,PropertyType,Price,StreetName,Area,Ward,City,HouseNumber,Latitude,Longitude,Status")] Listing listing)
+    //    {
+    //        if (id != listing.Id) return NotFound();
+
+    //        if (ModelState.IsValid)
+    //        {
+    //            try
+    //            {
+    //                var existing = await _context.Listing.FindAsync(id);
+    //                if (existing == null) return NotFound();
+
+    //                existing.ListerId = listing.ListerId;
+    //                existing.Title = listing.Title;
+    //                existing.TransactionType = listing.TransactionType;
+    //                existing.PropertyType = listing.PropertyType;
+    //                existing.Price = listing.Price;
+    //                existing.StreetName = listing.StreetName;
+    //                existing.Area = listing.Area;
+    //                existing.Ward = listing.Ward;
+    //                existing.City = listing.City;
+    //                existing.HouseNumber = listing.HouseNumber;
+    //                existing.Latitude = listing.Latitude;
+    //                existing.Longitude = listing.Longitude;
+    //                existing.Status = listing.Status;
+    //                Console.Write(existing.Latitude);
+    //                _context.Entry(existing).State = EntityState.Modified;
+    //                await _context.SaveChangesAsync();
+    //            }
+    //            catch (DbUpdateConcurrencyException)
+    //            {
+    //                if (!ListingExists(listing.Id))
+    //                    return NotFound();
+    //                else
+    //                    throw;
+    //            }
+
+    //            return RedirectToAction(nameof(Index));
+    //        }
+
+    //        return View("~/Views/RealEstates/Edit.cshtml", listing);
+    //    }
+
+    //    // GET: /Listing/Delete/{id}
+    //    public async Task<IActionResult> Delete(Guid? id)
+    //    {
+    //        if (id == null) return NotFound();
+
+    //        var listing = await _context.Listing.AsNoTracking()
+    //            .FirstOrDefaultAsync(l => l.Id == id.Value);
+
+    //        if (listing == null) return NotFound();
+
+    //        return View("~/Views/RealEstates/Delete.cshtml", listing);
+    //    }
+
+    //    // POST: /Listing/Delete
+    //    [HttpPost, ActionName("Delete")]
+    //    [ValidateAntiForgeryToken]
+    //    public async Task<IActionResult> DeleteConfirmed(Guid id)
+    //    {
+    //        var listing = await _context.Listing.FindAsync(id);
+    //        if (listing != null)
+    //        {
+    //            _context.Listing.Remove(listing);
+    //            await _context.SaveChangesAsync();
+    //        }
+
+    //        return RedirectToAction(nameof(Index));
+    //    }
+
+    //    private bool ListingExists(Guid id)
+    //    {
+    //        return _context.Listing.Any(e => e.Id == id);
+    //    }
+    //}
+
     public class ListingController : Controller
     {
-        private readonly RealEstateListingPlatformContext _context;
+        private readonly ListingService _listingService;
 
-        public ListingController(RealEstateListingPlatformContext context)
+        public ListingController(ListingService listingService)
         {
-            _context = context;
+            _listingService = listingService;
         }
 
         // GET: /Listing
         public async Task<IActionResult> Index()
         {
-            var listings = await _context.Listing.AsNoTracking()
-                .OrderByDescending(l => l.CreatedAt)
-                .ToListAsync();
-
+            var listings = await _listingService.GetAllAsync();
             return View("~/Views/RealEstates/Index.cshtml", listings);
         }
 
         // GET: /Listing/Details/{id}
-        public async Task<IActionResult> Details(Guid? id)
+        public async Task<IActionResult> Details(Guid id)
         {
-            if (id == null) return NotFound();
+            if (id == Guid.Empty) return NotFound();
 
-            var listings = await _context.Listing.AsNoTracking()
-                .FirstOrDefaultAsync(l => l.Id == id.Value);
+            var listing = await _listingService.GetByIdAsync(id);
+            if (listing == null) return NotFound();
 
-            if (listings == null) return NotFound();
-
-            return View("~/Views/RealEstates/Details.cshtml", listings);
+            return View("~/Views/RealEstates/Details.cshtml", listing);
         }
 
         // GET: /Listing/Create
@@ -49,26 +189,23 @@ namespace RealEstateListingPlatform.Controllers
 
         // POST: /Listing/Create
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("ListerId,Title,TransactionType,PropertyType,Price,StreetName,Area,Ward,City,HouseNumber,Latitude,Longitude,Status")] Listing listing)
+        //[ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(Listing listing)
         {
-            if (!ModelState.IsValid) return View("~/Views/RealEstates/Create.cshtml", listing);
-
-            listing.Id = listing.Id == Guid.Empty ? Guid.NewGuid() : listing.Id;
-            listing.CreatedAt = DateTime.UtcNow.AddHours(7);
-
-            _context.Listing.Add(listing);
-            await _context.SaveChangesAsync();
-
+            if (!ModelState.IsValid)
+            {
+                return View("~/Views/RealEstates/Create.cshtml", listing);
+            }
+            await _listingService.CreateAsync(listing);
             return RedirectToAction(nameof(Index));
         }
 
         // GET: /Listing/Edit/{id}
-        public async Task<IActionResult> Edit(Guid? id)
+        public async Task<IActionResult> Edit(Guid id)
         {
-            if (id == null) return NotFound();
+            if (id == Guid.Empty) return NotFound();
 
-            var listing = await _context.Listing.FindAsync(id.Value);
+            var listing = await _listingService.GetByIdAsync(id);
             if (listing == null) return NotFound();
 
             return View("~/Views/RealEstates/Edit.cshtml", listing);
@@ -76,80 +213,41 @@ namespace RealEstateListingPlatform.Controllers
 
         // POST: /Listing/Edit/{id}
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(Guid id, [Bind("Id,ListerId,Title,TransactionType,PropertyType,Price,StreetName,Area,Ward,City,HouseNumber,Latitude,Longitude,Status")] Listing listing)
+        //[ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(Guid id, Listing listing)
         {
             if (id != listing.Id) return NotFound();
 
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    var existing = await _context.Listing.FindAsync(id);
-                    if (existing == null) return NotFound();
+            if (!ModelState.IsValid)
+                return View("~/Views/RealEstates/Edit.cshtml", listing);
 
-                    existing.ListerId = listing.ListerId;
-                    existing.Title = listing.Title;
-                    existing.TransactionType = listing.TransactionType;
-                    existing.PropertyType = listing.PropertyType;
-                    existing.Price = listing.Price;
-                    existing.StreetName = listing.StreetName;
-                    existing.Area = listing.Area;
-                    existing.Ward = listing.Ward;
-                    existing.City = listing.City;
-                    existing.HouseNumber = listing.HouseNumber;
-                    existing.Latitude = listing.Latitude;
-                    existing.Longitude = listing.Longitude;
-                    existing.Status = listing.Status;
-                    Console.Write(existing.Latitude);
-                    _context.Entry(existing).State = EntityState.Modified;
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!ListingExists(listing.Id))
-                        return NotFound();
-                    else
-                        throw;
-                }
+            var updated = await _listingService.UpdateAsync(listing);
+            if (!updated) return NotFound();
 
-                return RedirectToAction(nameof(Index));
-            }
-
-            return View("~/Views/RealEstates/Edit.cshtml", listing);
+            return RedirectToAction(nameof(Index));
         }
 
         // GET: /Listing/Delete/{id}
-        public async Task<IActionResult> Delete(Guid? id)
+        public async Task<IActionResult> Delete(Guid id)
         {
-            if (id == null) return NotFound();
+            if (id == Guid.Empty) return NotFound();
 
-            var listing = await _context.Listing.AsNoTracking()
-                .FirstOrDefaultAsync(l => l.Id == id.Value);
-
+            var listing = await _listingService.GetByIdAsync(id);
             if (listing == null) return NotFound();
 
             return View("~/Views/RealEstates/Delete.cshtml", listing);
         }
 
-        // POST: /Listing/Delete
+        // POST: /Listing/Delete/{id}
         [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
+        //[ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(Guid id)
         {
-            var listing = await _context.Listing.FindAsync(id);
-            if (listing != null)
-            {
-                _context.Listing.Remove(listing);
-                await _context.SaveChangesAsync();
-            }
+            var deleted = await _listingService.DeleteAsync(id);
+            if (!deleted) return NotFound();
 
             return RedirectToAction(nameof(Index));
         }
-
-        private bool ListingExists(Guid id)
-        {
-            return _context.Listing.Any(e => e.Id == id);
-        }
     }
+
 }

@@ -78,15 +78,15 @@
             <table class="table table-borderless">
                 <tr>
                     <th width="40%">Latitude</th>
-                    <td>@(Model.Latitude?.ToString("F6") ?? "-")</td>
+                    <td>@(Model.Latitude.ToString("F6") ?? "-")</td>
                 </tr>
                 <tr>
                     <th>Longitude</th>
-                    <td>@(Model.Longitude?.ToString("F6") ?? "-")</td>
+                    <td>@(Model.Longitude.ToString("F6") ?? "-")</td>
                 </tr>
                 <tr>
-                    <th>Listing ID</th>
-                    <td>@Model.Id</td>
+                    <th>Lister ID</th>
+                    <td>@Model.ListerId</td>
                 </tr>
             </table>
         </div>

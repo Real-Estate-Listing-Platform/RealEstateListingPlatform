@@ -2,12 +2,15 @@
 using Microsoft.Extensions.DependencyInjection;
 using RealEstateListingPlatform.Data;
 using RealEstateListingPlatform.Models;
+using RealEstateListingPlatform.Services;
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<RealEstateListingPlatformContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("RealEstateListingPlatformContext") ?? throw new InvalidOperationException("Connection string 'RealEstateListingPlatformContext' not found.")));
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+builder.Services.AddScoped<ListingService>();
+
 
 var app = builder.Build();
 
