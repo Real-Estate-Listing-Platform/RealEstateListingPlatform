@@ -1,31 +1,86 @@
-html {
-  font-size: 14px;
-}
-
-@media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
-}
-
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
-}
-
-html {
-  position: relative;
-  min-height: 100%;
+/* Fix for sticky footer */
+html, body {
+    height: 100%;
 }
 
 body {
-  margin-bottom: 60px;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
 }
 
-.form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
-  color: var(--bs-secondary-color);
-  text-align: end;
+.container {
+    flex: 1 0 auto;
+    padding-bottom: 20px;
 }
 
-.form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
-  text-align: start;
+.footer {
+    flex-shrink: 0;
+    width: 100%;
+    position: relative;
+    bottom: 0;
+}
+
+/* Ensure content doesn't overlap with footer */
+main {
+    margin-bottom: 30px;
+}
+
+/* Fix for Bootstrap spacing */
+.mt-auto {
+    margin-top: auto !important;
+}
+
+/* Specific fixes for listing pages */
+.listing-card {
+    margin-bottom: 20px;
+}
+
+/* Home page specific */
+.jumbotron {
+    margin-bottom: 30px;
+}
+
+/* Fix for carousel in detail page */
+.carousel {
+    margin-bottom: 20px;
+}
+
+/* Final fix for footer overlapping */
+body.d-flex.flex-column.min-vh-100 {
+    position: relative;
+}
+
+.container.flex-grow-1 {
+    min-height: calc(100vh - 200px); /* Adjust based on your header/footer height */
+}
+
+/* Ensure content has enough space above footer */
+.home-content,
+.rent-content,
+.buy-content,
+.all-listings-content {
+    padding-bottom: 50px;
+}
+
+/* Footer specific styling */
+footer.border-top.footer {
+    background-color: #f8f9fa;
+    border-top: 1px solid #dee2e6 !important;
+    position: relative;
+    z-index: 100;
+    width: 100%;
+}
+
+/* Make sure nothing is positioned absolutely over footer */
+.carousel,
+.card,
+.jumbotron {
+    position: relative;
+    z-index: 1;
+}
+
+/* Fix for pages with little content */
+.min-height-wrapper {
+    min-height: 400px;
 }

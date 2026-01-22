@@ -1,14 +1,11 @@
 ﻿using DAL.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BLL.Services
 {
     public interface IListingService
     {
         public Task<List<Listing>> GetListings();
+        public Task<List<Listing>> GetListingsByTransactionType(string transactionType);
+        public Task<Listing> GetListingById(Guid id);
     }
 }

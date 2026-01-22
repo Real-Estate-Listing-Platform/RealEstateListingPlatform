@@ -1,12 +1,12 @@
 ﻿@model IEnumerable<DAL.Models.Listing>
 
 @{
-    ViewData["Title"] = "Tất cả tin đăng";
+    ViewData["Title"] = "Nhà cho thuê";
 }
 
-<div class="all-listings-content">
+<div class="rent-content">
     <div class="container mt-4">
-        <h1 class="mb-4">📋 Tất cả tin đăng</h1>
+        <h1 class="mb-4">🏠 Nhà cho thuê</h1>
 
         <div class="row">
             @foreach (var item in Model)
@@ -26,10 +26,7 @@
 
                         <div class="card-body">
                             <h5 class="card-title">@item.Title</h5>
-                            <p class="card-text @(item.TransactionType == "Rent" ? "text-success" : "text-danger") fw-bold">
-                                @item.Price.ToString("N0")
-                                @(item.TransactionType == "Rent" ? "VNĐ/tháng" : "VNĐ")
-                            </p>
+                            <p class="card-text text-success fw-bold">@item.Price.ToString("N0") VNĐ/tháng</p>
                             <p class="card-text">
                                 <i class="fas fa-map-marker-alt"></i>
                                 @item.StreetName, @item.Ward, @item.District, @item.City
@@ -37,9 +34,7 @@
                             <p class="card-text">
                                 <i class="fas fa-bed"></i> @item.Bedrooms phòng ngủ
                                 <i class="fas fa-bath ms-3"></i> @item.Bathrooms phòng tắm
-                                <span class="badge @(item.TransactionType == "Rent" ? "bg-success" : "bg-danger") ms-3">
-                                    @(item.TransactionType == "Rent" ? "Cho thuê" : "Bán")
-                                </span>
+                                <i class="fas fa-layer-group ms-3"></i> @item.Floors tầng
                             </p>
                             <p class="card-text"><small class="text-muted">Đăng bởi: @item.Lister.DisplayName</small></p>
                         </div>
@@ -56,7 +51,7 @@
             {
                 <div class="col-12">
                     <div class="alert alert-info">
-                        Hiện không có tin đăng nào.
+                        Hiện không có nhà cho thuê nào.
                     </div>
                 </div>
             }

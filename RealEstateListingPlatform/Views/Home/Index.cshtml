@@ -1,8 +1,59 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Real Estate Listing Platform";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="home-content">
+    <div class="container mt-5">
+        <div class="jumbotron text-center bg-light p-5 rounded">
+            <h1 class="display-4">🏠 Welcome to Real Estate Listing Platform</h1>
+            <p class="lead">Tìm kiếm nhà cho thuê, nhà cần bán với hàng nghìn tin đăng uy tín.</p>
+            <hr class="my-4">
+
+            <div class="row mt-5">
+                <div class="col-md-6 mb-4">
+                    <div class="card text-white bg-success h-100">
+                        <div class="card-body text-center">
+                            <i class="fas fa-key fa-3x mb-3"></i>
+                            <h3>Nhà cho thuê</h3>
+                            <p>Tìm kiếm phòng trọ, căn hộ, nhà nguyên căn cho thuê với giá tốt nhất.</p>
+                            <a href="@Url.Action("Index", "Rent")" class="btn btn-light btn-lg">Xem ngay</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6 mb-4">
+                    <div class="card text-white bg-danger h-100">
+                        <div class="card-body text-center">
+                            <i class="fas fa-tag fa-3x mb-3"></i>
+                            <h3>Nhà cần bán</h3>
+                            <p>Mua bán bất động sản, căn hộ, đất nền với nhiều lựa chọn.</p>
+                            <a href="@Url.Action("Index", "Buy")" class="btn btn-light btn-lg">Xem ngay</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-5">
+                <h3>Tính năng nổi bật</h3>
+                <div class="row mt-4">
+                    <div class="col-md-3">
+                        <i class="fas fa-search fa-2x text-primary"></i>
+                        <h5>Tìm kiếm thông minh</h5>
+                    </div>
+                    <div class="col-md-3">
+                        <i class="fas fa-check-circle fa-2x text-success"></i>
+                        <h5>Tin đăng đã xác thực</h5>
+                    </div>
+                    <div class="col-md-3">
+                        <i class="fas fa-map-marked-alt fa-2x text-info"></i>
+                        <h5>Xem vị trí trên bản đồ</h5>
+                    </div>
+                    <div class="col-md-3">
+                        <i class="fas fa-headset fa-2x text-warning"></i>
+                        <h5>Hỗ trợ 24/7</h5>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>

@@ -1,0 +1,189 @@
+﻿@model DAL.Models.Listing
+
+@{
+    ViewData["Title"] = "Chi tiết tin đăng";
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <!-- Hình ảnh và Gallery -->
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div id="listingCarousel" class="carousel slide" data-bs-ride="carousel">
+                    <div class="carousel-inner">
+                        @for (int i = 0; i < Model.ListingMedia.Count; i++)
+                        {
+                            var media = Model.ListingMedia.ElementAt(i);
+                            <div class="carousel-item @(i == 0 ? "active" : "")">
+                                <img src="@media.Url" class="d-block w-100" alt="Ảnh @(i+1)" style="height: 500px; object-fit: cover;">
+                            </div>
+                        }
+                    </div>
+                    
+                    @if (Model.ListingMedia.Count > 1)
+                    {
+                        <button class="carousel-control-prev" type="button" data-bs-target="#listingCarousel" data-bs-slide="prev">
+                            <span class="carousel-control-prev-icon"></span>
+                        </button>
+                        <button class="carousel-control-next" type="button" data-bs-target="#listingCarousel" data-bs-slide="next">
+                            <span class="carousel-control-next-icon"></span>
+                        </button>
+                    }
+                </div>
+            </div>
+            
+            <!-- Thông tin chi tiết -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h3 class="card-title">@Model.Title</h3>
+                    <p class="text-muted">
+                        <i class="fas fa-map-marker-alt"></i> 
+                        @Model.StreetName, @Model.Ward, @Model.District, @Model.City
+                    </p>
+                    
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <p><strong>Loại giao dịch:</strong> @(Model.TransactionType == "Rent" ? "Cho thuê" : "Bán")</p>
+                            <p><strong>Loại bất động sản:</strong> @Model.PropertyType</p>
+                            <p><strong>Diện tích:</strong> @Model.Area m²</p>
+                            <p><strong>Số phòng ngủ:</strong> @Model.Bedrooms</p>
+                            <p><strong>Số phòng tắm:</strong> @Model.Bathrooms</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Số tầng:</strong> @Model.Floors</p>
+                            <p><strong>Hướng nhà:</strong> @Model.Direction</p>
+                            <p><strong>Tình trạng pháp lý:</strong> @Model.LegalStatus</p>
+                            <p><strong>Tình trạng nội thất:</strong> @Model.FurnitureStatus</p>
+                            <p><strong>Ngày đăng:</strong> @Model.CreatedAt?.ToString("dd/MM/yyyy")</p>
+                        </div>
+                    </div>
+                    
+                    <hr />
+                    
+                    <h5>Mô tả chi tiết</h5>
+                    <p>@Model.Description</p>
+                </div>
+            </div>
+            
+            <!-- Lịch sử giá -->
+            @if (Model.ListingPriceHistories.Any())
+            {
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Lịch sử thay đổi giá</h5>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Ngày thay đổi</th>
+                                    <th>Giá cũ</th>
+                                    <th>Giá mới</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var history in Model.ListingPriceHistories.OrderByDescending(h => h.ChangedAt))
+                                {
+                                    <tr>
+                                        <td>@history.ChangedAt?.ToString("dd/MM/yyyy HH:mm")</td>
+                                        <td>@(history.OldPrice?.ToString("N0") ?? "N/A") VNĐ</td>
+                                        <td>@(history.NewPrice?.ToString("N0") ?? "N/A") VNĐ</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            }
+        </div>
+        
+        <!-- Sidebar với thông tin liên hệ và giá -->
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h4 class="text-danger fw-bold">
+                        @if (Model.TransactionType == "Rent")
+                        {
+                            @Model.Price.ToString("N0") <small>VNĐ/tháng</small>
+                        }
+                        else
+                        {
+                            @Model.Price.ToString("N0") <small>VNĐ</small>
+                        }
+                    </h4>
+                    
+                    <hr />
+                    
+                    <h5>Thông tin người đăng</h5>
+                    <div class="d-flex align-items-center mb-3">
+                        @if (!string.IsNullOrEmpty(Model.Lister.AvatarUrl))
+                        {
+                            <img src="@Model.Lister.AvatarUrl" class="rounded-circle me-3" width="60" height="60" alt="Avatar">
+                        }
+                        <div>
+                            <strong>@Model.Lister.DisplayName</strong><br>
+                            <small class="text-muted">@Model.Lister.Role</small>
+                        </div>
+                    </div>
+                    
+                    @if (!string.IsNullOrEmpty(Model.Lister.Phone))
+                    {
+                        <p><i class="fas fa-phone"></i> @Model.Lister.Phone</p>
+                    }
+                    
+                    @if (!string.IsNullOrEmpty(Model.Lister.Email))
+                    {
+                        <p><i class="fas fa-envelope"></i> @Model.Lister.Email</p>
+                    }
+                    
+                    <button class="btn btn-success w-100 mt-3">
+                        <i class="fas fa-comment"></i> Liên hệ ngay
+                    </button>
+                    <button class="btn btn-outline-primary w-100 mt-2">
+                        <i class="fas fa-heart"></i> Lưu tin
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Thông tin bổ sung -->
+            <div class="card">
+                <div class="card-body">
+                    <h5>Thông tin bổ sung</h5>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-check text-success me-2"></i> Tin đã được xác thực</li>
+                        <li><i class="fas fa-eye me-2"></i> Trạng thái: @Model.Status</li>
+                        <li><i class="fas fa-calendar me-2"></i> Hết hạn: @Model.ExpirationDate?.ToString("dd/MM/yyyy")</li>
+                    </ul>
+                    
+                    @if (Model.ListingTour360 != null)
+                    {
+                        <hr />
+                        <h6>Tour 360°</h6>
+                        <a href="@Model.ListingTour360.EmbedUrl" target="_blank" class="btn btn-outline-info w-100">
+                            <i class="fas fa-vr-cardboard"></i> Xem Tour 360°
+                        </a>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Khởi tạo carousel
+        var carousel = new bootstrap.Carousel(document.getElementById('listingCarousel'), {
+            interval: 5000
+        });
+        
+        // Xử lý nút liên hệ
+        document.querySelector('.btn-success').addEventListener('click', function() {
+            alert('Tính năng liên hệ sẽ được triển khai trong phiên bản tiếp theo!');
+        });
+        
+        // Xử lý nút lưu tin
+        document.querySelector('.btn-outline-primary').addEventListener('click', function() {
+            alert('Tin đã được thêm vào danh sách yêu thích!');
+        });
+    </script>
+}
