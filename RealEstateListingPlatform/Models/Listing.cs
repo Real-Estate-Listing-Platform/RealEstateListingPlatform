@@ -7,51 +7,49 @@ namespace RealEstateListingPlatform.Models
     public class Listing
     {
         [Key]
-        public Guid Id { get; set; } = Guid.NewGuid();
+        public Guid Id { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "Lister is required")]
         public Guid ListerId { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "Title is required")]
+        [StringLength(200)]
         public string Title { get; set; } = string.Empty;
 
-        [Required]
-        [StringLength(50)]
+        [Required(ErrorMessage = "Please choose transaction type")]
         public string TransactionType { get; set; } = string.Empty;
 
-        [Required]
-        [StringLength(50)]
+        [Required(ErrorMessage = "Please choose property type")]
         public string PropertyType { get; set; } = string.Empty;
 
-        [Required]
-        [Column(TypeName = "decimal(18,2)")]
+        [Required(ErrorMessage = "Price is required")]
+        [Range(1, double.MaxValue, ErrorMessage = "Price must be greater than 0")]
         public decimal Price { get; set; }
 
-        [StringLength(250)]
-        public string? StreetName { get; set; }
+        [Required(ErrorMessage = "Street is required")]
+        public string StreetName { get; set; } = string.Empty;
 
-        [StringLength(100)]
-        public string? Area { get; set; }
+        [Required(ErrorMessage = "Area is required")]
+        public string Area { get; set; } = string.Empty;
 
-        [StringLength(100)]
-        public string? Ward { get; set; }
+        [Required(ErrorMessage = "Ward is required")]
+        public string Ward { get; set; } = string.Empty;
 
-        [StringLength(100)]
-        public string? City { get; set; }
+        [Required(ErrorMessage = "City is required")]
+        public string City { get; set; } = string.Empty;
 
-        [StringLength(50)]
-        public string? HouseNumber { get; set; }
+        [Required(ErrorMessage = "House number is required")]
+        public string HouseNumber { get; set; } = string.Empty;
 
-        [Column(TypeName = "decimal(9,6)")]
-        public decimal? Latitude { get; set; }
+        [Required(ErrorMessage = "Latitude is required")]
+        public decimal Latitude { get; set; }
 
-        [Column(TypeName = "decimal(9,6)")]
-        public decimal? Longitude { get; set; }
+        [Required(ErrorMessage = "Longitude is required")]
+        public decimal Longitude { get; set; }
 
-        [Required]
-        [StringLength(50)]
+        [Required(ErrorMessage = "Status is required")]
         public string Status { get; set; } = "Draft";
 
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedAt { get; set; }
     }
 }
