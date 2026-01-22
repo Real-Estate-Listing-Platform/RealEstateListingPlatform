@@ -1,51 +1,41 @@
-﻿using System;
-using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
-namespace DAL.Models;
-
-public partial class User
+namespace DAL.Models
 {
-    public Guid Id { get; set; }
+    public class User
+    {
+        [Key]
+        public Guid Id { get; set; } = Guid.NewGuid();
 
-    public string DisplayName { get; set; } = null!;
+        [Required]
+        [StringLength(100)]
+        public string DisplayName { get; set; } = string.Empty;
 
-    public string Role { get; set; } = null!;
+        [Required]
+        [StringLength(20)]
+        public string Role { get; set; } = "Seeker"; // Default role
 
-    public string Email { get; set; } = null!;
+        [Required]
+        [EmailAddress]
+        [StringLength(100)]
+        public string Email { get; set; } = string.Empty;
 
-    public string? Phone { get; set; }
+        [StringLength(20)]
+        public string? Phone { get; set; }
 
-    public string? Address { get; set; }
+        [StringLength(255)]
+        public string? Address { get; set; }
 
-    public string? PasswordHash { get; set; }
+        public string? PasswordHash { get; set; }
+        public string? AvatarUrl { get; set; }
+        public string? Bio { get; set; }
 
-    public string? AvatarUrl { get; set; }
+        public bool IsEmailVerified { get; set; } = false;
+        public bool IsActive { get; set; } = true;
+        public DateTime? LastLoginAt { get; set; }
 
-    public string? Bio { get; set; }
-
-    public bool? IsEmailVerified { get; set; }
-
-    public bool? IsActive { get; set; }
-
-    public DateTime? LastLoginAt { get; set; }
-
-    public DateTime? CreatedAt { get; set; }
-
-    public DateTime? UpdatedAt { get; set; }
-
-    public virtual ICollection<AuditLog> AuditLogs { get; set; } = new List<AuditLog>();
-
-    public virtual ICollection<Favorite> Favorites { get; set; } = new List<Favorite>();
-
-    public virtual ICollection<Lead> LeadListers { get; set; } = new List<Lead>();
-
-    public virtual ICollection<Lead> LeadSeekers { get; set; } = new List<Lead>();
-
-    public virtual ICollection<ListingPriceHistory> ListingPriceHistories { get; set; } = new List<ListingPriceHistory>();
-
-    public virtual ICollection<Listing> Listings { get; set; } = new List<Listing>();
-
-    public virtual ICollection<Notification> Notifications { get; set; } = new List<Notification>();
-
-    public virtual ICollection<Report> Reports { get; set; } = new List<Report>();
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+    }
 }

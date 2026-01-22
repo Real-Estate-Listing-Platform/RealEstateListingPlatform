@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Microsoft.EntityFrameworkCore;
 
 namespace DAL.Models;
 
@@ -9,8 +10,10 @@ public partial class ListingPriceHistory
 
     public Guid ListingId { get; set; }
 
+    [Precision(18, 2)]
     public decimal? OldPrice { get; set; }
 
+    [Precision(18, 2)]
     public decimal? NewPrice { get; set; }
 
     public Guid? ChangedByUserId { get; set; }
