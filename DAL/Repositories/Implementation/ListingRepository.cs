@@ -17,6 +17,15 @@ namespace DAL.Repositories.Implementation
             return await _context.Listings.ToListAsync();
         }
 
+        public async Task<IEnumerable<Listing>> GetPendingListingsAsync()
+        {
+            var result = await _context.Listings
+                .Include(l => l.Lister)
+                .Where(l => l.Status == "PendingReview")
+                .ToListAsync();
+            return result;
+        }
+
         public async Task<Listing?> GetByIdAsync(Guid id)
         {
             return await _context.Listings.FindAsync(id);

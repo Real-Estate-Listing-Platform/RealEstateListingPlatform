@@ -1,5 +1,6 @@
 ﻿using DAL.Models;
 using DAL.Repositories;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,6 +20,16 @@ namespace BLL.Services.Implementation
         public async Task<List<Listing>> GetListings()
         {
             return await _listingRepository.GetListings();
+        }
+
+        public async Task<IEnumerable<Listing>> GetPendingListingsAsync()
+        {
+            var result = await _listingRepository.GetPendingListingsAsync();
+            if (result == null)
+            {
+                return Enumerable.Empty<Listing>();
+            }
+            return result;
         }
 
         public async Task<bool> ApproveListingAsync(Guid id)

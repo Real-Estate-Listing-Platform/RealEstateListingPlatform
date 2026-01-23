@@ -10,6 +10,7 @@ namespace BLL.Services
     public interface IListingService
     {
         public Task<List<Listing>> GetListings();
+        Task<IEnumerable<Listing>> GetPendingListingsAsync(); 
         Task<bool> ApproveListingAsync(Guid id);
         Task<bool> RejectListingAsync(Guid id);
     }
