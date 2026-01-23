@@ -13,17 +13,30 @@ namespace RealEstateListingPlatform.Controllers
         [HttpGet] 
         public async Task<IActionResult> ListingOperations()
         {
-            var listings = _listingService.GetPendingListingsAsync().Result ?? new List<Listing>(); ;
-            
+            var listings = await _listingService.GetPendingListingsAsync();
+
+            if (listings == null)
+            {
+                listings = new List<Listing>();
+            }
+
             var viewModel = listings.Select(l => new ListingApprovalViewModel
             {
                 Id = l.Id,
                 Title = l.Title,
-                Price = l.Price,                
-                PropertyType = l.PropertyType ?? "N/A",
-                Address = $"{l.District}, {l.City}",
+                Price = l.Price,
+                Description = l.Description ?? "N/A",
+                TransactionType = l.TransactionType ?? "N/A",
+                PropertyType = l.PropertyType ?? "N/A",                
+                Area = l.Area ?? "N/A",
+                FurnitureStatus = l.FurnitureStatus ?? "N/A",
+                Direction = l.Direction ?? "N/A",
+                Bedrooms = l.Bedrooms,       
+                Bathrooms = l.Bathrooms,     
+                LegalStatus = l.LegalStatus ?? "N/A",
+                Address = $"{l.StreetName},{l.Ward},{l.District}, {l.City}",
                 CreatedAt = l.CreatedAt ?? DateTime.Now,
-                ListerName = "Owner"
+                ListerName = l.Lister?.DisplayName ?? "Unknown User"
             }).ToList();
 
             return View(viewModel);

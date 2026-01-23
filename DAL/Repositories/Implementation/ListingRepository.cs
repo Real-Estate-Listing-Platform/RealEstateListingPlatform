@@ -20,6 +20,7 @@ namespace DAL.Repositories.Implementation
         public async Task<IEnumerable<Listing>> GetPendingListingsAsync()
         {
             var result = await _context.Listings
+                .Include(l => l.Lister)
                 .Where(l => l.Status == "PendingReview")
                 .ToListAsync();
             return result;

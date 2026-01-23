@@ -4,87 +4,258 @@
     ViewData["Title"] = "Admin - Listing Approval";
 }
 
-<div class="container mt-5">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2><i class="bi bi-shield-check"></i> Pending Listings Approval</h2>
-        <span class="badge bg-primary">@Model.Count() Pending Requests</span>
+<div class="container mt-4 mb-5">
+    <div class="row align-items-end mb-4 g-3">
+        <div class="col-12 col-md-6 text-center text-md-start">
+            <h2 class="fw-bold text-dark mb-1">Listing Operations</h2>
+            <p class="text-muted mb-0 small">Review and manage pending submissions</p>
+        </div>
+        <div class="col-12 col-md-6 text-center text-md-end">
+            <span class="badge bg-auth-light text-primary px-3 py-2 rounded-pill shadow-sm">
+                <i class="bi bi-clock-history me-1"></i> @Model.Count() Pending Requests
+            </span>
+        </div>
     </div>
 
-    <div class="card shadow-sm">
+    <div class="card auth-card border-0 shadow-sm">
         <div class="card-body p-0">
-            <table class="table table-hover mb-0 align-middle">
-                <thead class="table-dark">
-                    <tr>
-                        <th>Date</th>
-                        <th>Listing Details</th>
-                        <th>Price</th>
-                        <th>Lister</th>
-                        <th class="text-center">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var item in Model)
-                    {
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="bg-light">
                         <tr>
-                            <td class="text-muted" style="width: 150px;">
-                                @item.CreatedAt.ToString("MMM dd, yyyy") <br />
-                                <small>@item.CreatedAt.ToString("HH:mm")</small>
-                            </td>
-                            <td>
-                                <div class="fw-bold">@item.Title</div>
-                                <div class="text-muted small">@item.PropertyType - @item.Address</div>
-                            </td>
-                            <td class="text-success fw-bold">
-                                $@item.Price.ToString("N0")
-                            </td>
-                            <td>@item.ListerName</td>
-                            <td class="text-center">
-                                <div class="btn-group" role="group">
-                                    <!-- Approve Form -->
-                                    <form asp-action="Approve" asp-route-id="@item.Id" method="post" onsubmit="return confirm('Approve this listing?')">
-                                        <button type="submit" class="btn btn-sm btn-outline-success mx-1">
-                                            <i class="bi bi-check-lg"></i> Approve
+                            <th class="ps-4 py-3 border-0 text-uppercase small fw-bold text-muted">Submission</th>
+                            <th class="py-3 border-0 text-uppercase small fw-bold text-muted">Property Info</th>
+                            <th class="py-3 border-0 text-uppercase small fw-bold text-muted d-none d-lg-table-cell">Price</th>
+                            <th class="py-3 border-0 text-uppercase small fw-bold text-muted d-none d-md-table-cell">Lister</th>
+                            <th class="py-3 border-0 text-uppercase small fw-bold text-muted text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="fw-bold text-dark">@item.CreatedAt.ToString("MMM dd")</div>
+                                    <div class="text-muted small">@item.CreatedAt.ToString("HH:mm")</div>
+                                </td>
+                                <td>
+                                    <div class="fw-bold text-primary text-truncate" style="max-width: 220px;">@item.Title</div>
+                                    <div class="text-muted small d-flex align-items-center mt-1">
+                                        <span class="badge-type me-2">@item.TransactionType</span>
+                                        <span class="d-none d-sm-inline text-truncate"><i class="bi bi-geo-alt me-1"></i>@item.Address</span>
+                                    </div>
+                                    <div class="d-lg-none mt-1 fw-bold text-dark small">@item.Price.ToString("N0") VND</div>
+                                </td>
+                                <td class="d-none d-lg-table-cell text-nowrap">
+                                    <div class="fw-bold text-dark">@item.Price.ToString("N0") <small>VND</small></div>
+                                </td>
+                                <td class="d-none d-md-table-cell">
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-sm me-2">@item.ListerName.Substring(0, 1).ToUpper()</div>
+                                        <span class="text-dark small">@item.ListerName</span>
+                                    </div>
+                                </td>
+                                <td class="text-center pe-4">
+                                    <div class="btn-group rounded-pill overflow-hidden border shadow-sm bg-white">
+                                        <button class="btn btn-sm btn-white px-3" data-bs-toggle="modal" data-bs-target="#detailsModal-@item.Id" title="View Details">
+                                            <i class="bi bi-eye text-primary"></i>
                                         </button>
-                                    </form>
 
-                                    <!-- Reject Trigger (Modal) -->
-                                    <button class="btn btn-sm btn-outline-danger mx-1" data-bs-toggle="modal" data-bs-target="#rejectModal-@item.Id">
-                                        <i class="bi bi-x-lg"></i> Reject
-                                    </button>
-                                </div>
+                                        <form asp-action="Approve" asp-route-id="@item.Id" method="post" class="d-inline">
+                                            <button type="submit" class="btn btn-sm btn-white px-3 border-start" title="Approve" onclick="return confirm('Confirm approval?')">
+                                                <i class="bi bi-check2-circle text-success"></i>
+                                            </button>
+                                        </form>
 
-                                <!-- Modal for Rejection Reason -->
-                                <div class="modal fade" id="rejectModal-@item.Id" tabindex="-1" aria-hidden="true">
-                                    <div class="modal-dialog">
-                                        <div class="modal-content">
-                                            <form asp-action="Reject" method="post">
-                                                <input type="hidden" name="id" value="@item.Id" />
-                                                <div class="modal-header">
-                                                    <h5 class="modal-title text-danger">Reject Listing</h5>
-                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        <button class="btn btn-sm btn-white px-3 border-start" data-bs-toggle="modal" data-bs-target="#rejectModal-@item.Id" title="Reject">
+                                            <i class="bi bi-slash-circle text-danger"></i>
+                                        </button>
+                                    </div>
+
+                                    <div class="modal fade" id="detailsModal-@item.Id" tabindex="-1" aria-hidden="true">
+                                        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+                                            <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
+                                                <div class="modal-header border-0 pb-0">
+                                                    <h5 class="fw-bold text-dark pt-3 ps-2">Property Details</h5>
+                                                    <button type="button" class="btn-close me-2 mt-2" data-bs-dismiss="modal"></button>
                                                 </div>
-                                                <div class="modal-body">
-                                                    <p class="text-start">Please provide a reason for rejecting <strong>@item.Title</strong>:</p>
-                                                    <textarea name="reason" class="form-control" rows="3" placeholder="e.g. Invalid price, inappropriate images..." required></textarea>
+                                                <div class="modal-body text-start p-4">
+                                                    <h4 class="text-primary fw-bold">@item.Title</h4>
+                                                    <p class="text-muted small mb-4"><i class="bi bi-geo-alt me-1"></i>@item.Address</p>
+
+                                                    <div class="row g-3 mb-4 text-center">
+                                                        <div class="col-6 col-md-3">
+                                                            <div class="p-3 bg-light rounded-4">
+                                                                <i class="bi bi-rulers d-block mb-1 text-primary"></i>
+                                                                <small class="text-muted d-block">Area</small>
+                                                                <span class="fw-bold small">@item.Area m²</span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-6 col-md-3">
+                                                            <div class="p-3 bg-light rounded-4">
+                                                                <i class="bi bi-door-closed d-block mb-1 text-primary"></i>
+                                                                <small class="text-muted d-block">Beds</small>
+                                                                <span class="fw-bold small">@item.Bedrooms</span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-6 col-md-3">
+                                                            <div class="p-3 bg-light rounded-4">
+                                                                <i class="bi bi-droplet d-block mb-1 text-primary"></i>
+                                                                <small class="text-muted d-block">Baths</small>
+                                                                <span class="fw-bold small">@item.Bathrooms</span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-6 col-md-3">
+                                                            <div class="p-3 bg-light rounded-4">
+                                                                <i class="bi bi-layers d-block mb-1 text-primary"></i>
+                                                                <small class="text-muted d-block">Floors</small>
+                                                                <span class="fw-bold small">@item.Floors</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="row mb-4 ps-1">
+                                                        <div class="col-md-4 mb-2"><span class="text-muted small">Legal:</span> <span class="fw-bold small ms-1">@item.LegalStatus</span></div>
+                                                        <div class="col-md-4 mb-2"><span class="text-muted small">Furniture:</span> <span class="fw-bold small ms-1">@item.FurnitureStatus</span></div>
+                                                        <div class="col-md-4 mb-2"><span class="text-muted small">Direction:</span> <span class="fw-bold small ms-1">@item.Direction</span></div>
+                                                    </div>
+
+                                                    <div class="p-3 rounded-4 bg-light">
+                                                        <label class="fw-bold small text-muted mb-2 d-block">Description</label>
+                                                        <div class="small text-dark" style="white-space: pre-line;">@item.Description</div>
+                                                    </div>
                                                 </div>
-                                                <div class="modal-footer">
-                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                                    <button type="submit" class="btn btn-danger">Confirm Reject</button>
+                                                <div class="modal-footer border-0 p-4 pt-0">
+                                                    <button type="button" class="btn btn-auth-primary w-100 py-2" data-bs-dismiss="modal">Close Review</button>
                                                 </div>
-                                            </form>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+
+                                    <div class="modal fade" id="rejectModal-@item.Id" tabindex="-1" aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
+                                                <form asp-action="Reject" method="post">
+                                                    <input type="hidden" name="id" value="@item.Id" />
+                                                    <div class="modal-header border-0">
+                                                        <h5 class="fw-bold text-danger pt-3 ps-2">Reject Submission</h5>
+                                                        <button type="button" class="btn-close me-2 mt-2" data-bs-dismiss="modal"></button>
+                                                    </div>
+                                                    <div class="modal-body p-4 pt-2">
+                                                        <label class="form-label small fw-bold text-muted mb-2">Reason for rejection</label>
+                                                        <textarea name="reason" class="form-control bg-light border-0 py-3 px-3 shadow-none"
+                                                                  rows="4" style="border-radius: 12px; resize: none;"
+                                                                  placeholder="Tell the lister why this was rejected..." required></textarea>
+                                                    </div>
+                                                    <div class="modal-footer border-0 p-4 pt-0">
+                                                        <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                                                        <button type="submit" class="btn btn-danger rounded-pill px-4">Confirm Reject</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
 
-<!-- Optional: Add Bootstrap Icons if not already present in Layout -->
 @section Styles {
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #6366f1;
+        }
+
+        body {
+            background-color: #f8fafc;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .auth-card {
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .bg-auth-light {
+            background-color: #eef2ff;
+        }
+
+        .table thead th {
+            font-size: 0.7rem;
+            letter-spacing: 0.05rem;
+        }
+
+        .table-hover tbody tr:hover {
+            background-color: #f1f5f9;
+        }
+
+        .badge-type {
+            background: #e2e8f0;
+            color: #475569;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 0.65rem;
+            font-weight: 700;
+        }
+
+        .avatar-sm {
+            width: 28px;
+            height: 28px;
+            background: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .btn-white {
+            background: white;
+            border: none;
+        }
+
+            .btn-white:hover {
+                background: #f8fafc;
+            }
+
+        .btn-auth-primary {
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 50px;
+            font-weight: 600;
+            border: none;
+            transition: 0.3s;
+        }
+
+            .btn-auth-primary:hover {
+                background-color: #4f46e5;
+                opacity: 0.9;
+            }
+
+        .rounded-4 {
+            border-radius: 12px !important;
+        }
+
+        @@media (max-width: 768px) {
+            .btn-group .btn {
+                padding-left: 0.75rem;
+                padding-right: 0.75rem;
+            }
+
+            .auth-card {
+                border-radius: 0;
+                margin-left: -1rem;
+                margin-right: -1rem;
+            }
+        }
+    </style>
 }
