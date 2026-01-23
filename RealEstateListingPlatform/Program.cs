@@ -13,8 +13,12 @@ builder.Services.AddDbContext<RealEstateListingPlatformContext>(options =>
 
 // Add services to the container.
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IListingRepository, ListingRepository>();
+
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IListingService, ListingService>();
+
 builder.Services.AddHttpClient();
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddMemoryCache(); // For OTP caching

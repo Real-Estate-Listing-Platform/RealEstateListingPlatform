@@ -1,50 +1,46 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using RealEstateListingPlatform.Models;
+﻿using BLL.Services;
+using Microsoft.AspNetCore.Mvc;
 
 namespace RealEstateListingPlatform.Controllers
 {
     public class AdminController : Controller
     {
-        public IActionResult ListingOperations()
+        private readonly IListingService _listingService;
+        public AdminController(IListingService listingService) => _listingService = listingService;
+
+        [HttpPost]
+        public async Task<IActionResult> Approve(Guid id)
         {
-            // Mock data for UI design purposes
-            var mockListings = new List<ListingApprovalViewModel>
+            var success = await _listingService.ApproveListingAsync(id);
+            //if (success)
+            //    TempData["Message"] = "Listing approved successfully.";
+            //else
+            //    TempData["Error"] = "Failed to approve listing.";
+
+            //return RedirectToAction("Index");
+
+            if (success)
             {
-                new ListingApprovalViewModel {
-                    Id = Guid.NewGuid(),
-                    Title = "Luxury Villa with Pool",
-                    PropertyType = "Villa",
-                    Price = 500000,
-                    Address = "123 District 1, HCM",
-                    ListerName = "John Doe",
-                    CreatedAt = DateTime.Now.AddDays(-1)
-                },
-                new ListingApprovalViewModel {
-                    Id = Guid.NewGuid(),
-                    Title = "Modern Apartment near Metro",
-                    PropertyType = "Apartment",
-                    Price = 120000,
-                    Address = "Flat 4B, District 7, HCM",
-                    ListerName = "Jane Smith",
-                    CreatedAt = DateTime.Now
-                }
-            };
-
-            return View(mockListings);
+                return Ok(new { message = "Update success in DB" });
+            }
+            return BadRequest(new { message = "Listing not found or status invalid" });
         }
 
         [HttpPost]
-        public IActionResult Approve(Guid id)
+        public async Task<IActionResult> Reject(Guid id)
         {
-            // Logic later
-            return RedirectToAction("ListingOperations");
-        }
+            var success = await _listingService.RejectListingAsync(id);
+            //if (success)
+            //    TempData["Message"] = "Listing has been rejected.";
+            //else
+            //    TempData["Error"] = "Failed to reject listing.";
 
-        [HttpPost]
-        public IActionResult Reject(Guid id, string reason)
-        {
-            // Logic later
-            return RedirectToAction("ListingOperations");
+            //return RedirectToAction("Index");
+            if (success)
+            {
+                return Ok(new { message = "Update success in DB" });
+            }
+            return BadRequest(new { message = "Listing not found or status invalid" });
         }
     }
 }
