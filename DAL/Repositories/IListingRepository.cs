@@ -10,6 +10,7 @@ namespace DAL.Repositories
     public interface IListingRepository
     {
         Task<List<Listing>> GetListings();
+        Task<IEnumerable<Listing>> GetPendingListingsAsync();
         Task<Listing?> GetByIdAsync(Guid id);
         Task UpdateAsync(Listing listing);
     }
