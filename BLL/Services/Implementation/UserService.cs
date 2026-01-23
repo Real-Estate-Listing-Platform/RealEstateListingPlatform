@@ -13,8 +13,14 @@ namespace BLL.Services.Implementation
     public class UserService : IUserService
     {
         private readonly IUserRepository _userRepository;
+<<<<<<< Updated upstream
         public UserService(IUserRepository userRepository) {
             _userRepository = userRepository; 
+=======
+        public UserService(IUserRepository userRepository)
+        {
+            _userRepository = userRepository;
+>>>>>>> Stashed changes
         }
 
         public async Task<List<User>> GetUsers()
