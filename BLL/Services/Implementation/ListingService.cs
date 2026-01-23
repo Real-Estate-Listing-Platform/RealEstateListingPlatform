@@ -15,9 +15,38 @@ namespace BLL.Services.Implementation
         {
             _listingRepository = listingRepository;
         }
+
         public async Task<List<Listing>> GetListings()
         {
             return await _listingRepository.GetListings();
+        }
+
+        public async Task<bool> ApproveListingAsync(Guid id)
+        {
+            var listing = await _listingRepository.GetByIdAsync(id);
+            if (listing == null) return false;
+
+            if (listing == null || listing.Status != "PendingReview")
+            {
+                return false;
+            }
+
+            listing.Status = "Published";
+            await _listingRepository.UpdateAsync(listing);
+            return true;
+        }
+
+        public async Task<bool> RejectListingAsync(Guid id)
+        {
+            var listing = await _listingRepository.GetByIdAsync(id);
+            if (listing == null) return false;
+            if (listing == null || listing.Status != "PendingReview")
+            {
+                return false;
+            }
+            listing.Status = "Rejected";
+            await _listingRepository.UpdateAsync(listing);
+            return true;
         }
     }
 }
