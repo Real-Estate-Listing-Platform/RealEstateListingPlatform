@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using DAL.Models;
 using DAL.Repositories;
@@ -7,6 +7,7 @@ using BLL.Services;
 using BLL.Services.Implementation;
 using RealEstateListingPlatform.Services;
 
+using RealEstateListingPlatform.Models;
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<RealEstateListingPlatformContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("RealEstateListingPlatformContext") ?? throw new InvalidOperationException("Connection string 'RealEstateListingPlatformContext' not found.")));
@@ -61,5 +62,10 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}")
     .WithStaticAssets();
 
+app.MapControllerRoute(
+    name: "listing",
+    pattern: "Listing/{action=Index}/{id?}",
+    defaults: new { controller = "Listings", action = "Index" })
+    .WithStaticAssets();
 
 app.Run();
