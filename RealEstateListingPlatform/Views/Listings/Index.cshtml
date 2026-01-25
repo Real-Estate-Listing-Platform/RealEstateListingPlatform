@@ -4,170 +4,283 @@
     ViewData["Title"] = "Index";
 }
 
-<h1>Index</h1>
+<style>
+    .re-listing-page {
+        max-width: 1100px;
+        margin: 24px auto;
+        font-family: Arial, Helvetica, sans-serif;
+    }
 
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Title)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Description)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.TransactionType)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.PropertyType)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Price)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.StreetName)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Ward)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.District)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.City)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Area)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.HouseNumber)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Latitude)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Longitude)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Bedrooms)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Bathrooms)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Floors)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.LegalStatus)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.FurnitureStatus)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Direction)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Status)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.ExpirationDate)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.CreatedAt)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.UpdatedAt)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Lister)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.Title)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Description)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.TransactionType)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.PropertyType)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Price)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.StreetName)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Ward)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.District)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.City)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Area)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.HouseNumber)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Latitude)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Longitude)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Bedrooms)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Bathrooms)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Floors)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.LegalStatus)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.FurnitureStatus)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Direction)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Status)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.ExpirationDate)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.CreatedAt)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.UpdatedAt)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Lister.DisplayName)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
-            </td>
-        </tr>
+    .re-header {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 18px;
+    }
+
+    .re-search {
+        flex: 1;
+        display: flex;
+        gap: 8px;
+    }
+
+        .re-search input {
+            flex: 1;
+            padding: 10px 12px;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+        }
+
+        .re-search button {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 10px 14px;
+            border-radius: 6px;
+        }
+
+    .re-filters {
+        display: flex;
+        gap: 8px;
+        margin: 12px 0 20px 0;
+        align-items: center;
+    }
+
+    .filter-btn {
+        border: 1px solid #e6e6e6;
+        padding: 8px 12px;
+        border-radius: 6px;
+        background: white;
+        color: #333;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    .re-list {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .re-card {
+        display: flex;
+        gap: 16px;
+        border: 1px solid #eee;
+        padding: 12px;
+        border-radius: 8px;
+        background: white;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    }
+
+    .re-card-media {
+        width: 320px;
+        height: 200px;
+        background: #f5f5f5;
+        border-radius: 6px;
+        overflow: hidden;
+        position: relative;
+    }
+
+        .re-card-media img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+    .re-badge {
+        position: absolute;
+        left: 8px;
+        top: 8px;
+        background: #ff5b5b;
+        color: white;
+        padding: 6px 8px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .re-card-body {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .re-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: #1f2937;
+        margin-bottom: 8px;
+    }
+
+    .re-meta {
+        color: #6b7280;
+        font-size: 14px;
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .re-desc {
+        margin-top: 10px;
+        color: #374151;
+    }
+
+    .re-actions {
+        margin-top: 12px;
+        display: flex;
+        gap: 12px;
+        align-items: center;
+    }
+
+    .re-price {
+        color: #dc2626;
+        font-weight: 800;
+        font-size: 20px;
+    }
+
+    .badge {
+        padding: 5px 10px;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 12px;
+        color: white;
+    }
+
+    .bg-secondary { background: #6b7280 }
+    .bg-warning { background: #facc15; color:#000 }
+    .bg-success { background: #16a34a }
+    .bg-danger { background: #dc2626 }
+
+    @@media (max-width:900px) {
+        .re-card {
+            flex-direction: column;
+        }
+
+        .re-card-media {
+            width: 100%;
+            height: 220px;
+        }
+    }
+</style>
+
+<div class="re-listing-page">
+
+    <!-- Search -->
+    <form method="get" class="re-header">
+        <div class="re-search">
+            <input name="q" value="@Context.Request.Query["q"]"
+                   placeholder="Searching..." />
+            <button type="submit">Search</button>
+        </div>
+        
+        <div class="col-md-2 text-end">
+                @if (User.IsInRole("Lister"))
+                {
+                    <a asp-controller="Listing"
+                       asp-action="Create"
+                       class="btn btn-warning fw-bold text-white">
+                        <i class="bi bi-plus-lg"></i> Post
+                    </a>
+                }
+         </div>
+
+    </form>
+
+    <!-- Filter bar -->
+    <div class="re-filters">
+        <a class="filter-btn" asp-action="Index">All</a>
+        <a class="filter-btn" asp-action="Index" asp-route-type="Sell">Sell</a>
+        <a class="filter-btn" asp-action="Index" asp-route-type="Rent">Rent</a>
+        <div style="margin-left:auto; color:#6b7280">
+            There are currently @Model.Count() listings.
+        </div>
+    </div>
+
+    <!-- Listing -->
+    <div class="re-list">
+        @if (!Model.Any())
+        {
+            <div class="filter-btn">Không có dữ liệu.</div>
+        }
+        else
+        {
+            foreach (var item in Model)
+            {
+                <div class="re-card">
+                    <div class="re-card-media">
+                        <span class="re-badge">VIP</span>
+                        <img src="https://via.placeholder.com/640x400.png?text=Image" />
+                    </div>
+
+                    <div class="re-card-body">
+                        <div>
+                            <div class="re-title">@item.Title</div>
+
+                            <div class="re-meta">
+                                <div class="re-price">
+                                    @(
+                                        item.TransactionType == "Rent"
+                                        ? item.Price.ToString("N0") + " ₫ / tháng"
+                                        : item.Price >= 1_000_000_000m
+                                            ? (item.Price / 1_000_000_000m).ToString("0.##") + " tỷ"
+                                            : item.Price.ToString("N0") + " ₫"
+                                    )
+                                </div>
+
+                                <div>📐 @(item.Area ?? "-")</div>
+
+                                <div>📍
+                                    @string.Join(", ",
+                                        new[] { item.StreetName, item.Ward, item.District, item.City }
+                                        .Where(x => !string.IsNullOrWhiteSpace(x))
+                                    )
+                                </div>
+
+                                <span class="badge @GetStatusClass(item.Status)">
+                                    @item.Status
+                                </span>
+
+                                <div>• @(item.CreatedAt?.ToString("dd/MM/yyyy HH:mm") ?? "-")</div>
+                            </div>
+
+                            <div class="re-desc">
+                                @(string.IsNullOrWhiteSpace(item.Description)
+                                    ? "Không có mô tả"
+                                    : item.Description.Length > 120
+                                        ? item.Description.Substring(0,120) + "..."
+                                        : item.Description
+                                )
+                            </div>
+                        </div>
+
+                        <div class="re-actions">
+                            <a asp-action="Details" asp-route-id="@item.Id" class="filter-btn">Chi tiết</a>
+                            @if (User.IsInRole("Lister"))
+                            {
+                                <a asp-action="Edit" asp-route-id="@item.Id" class="filter-btn">Sửa</a>
+                            }
+                            <div style="margin-left:auto; color:#9ca3af; font-size:13px;">
+                                #@item.Id.ToString()[..8]
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+</div>
+
+@functions {
+    string GetStatusClass(string? status)
+    {
+        return status switch
+        {
+            "Draft" => "bg-secondary",
+            "PendingReview" => "bg-warning",
+            "Published" => "bg-success",
+            "Rejected" => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
 }
-    </tbody>
-</table>

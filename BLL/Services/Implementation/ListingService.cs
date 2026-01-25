@@ -59,5 +59,30 @@ namespace BLL.Services.Implementation
             await _listingRepository.UpdateAsync(listing);
             return true;
         }
+
+        public async Task<Listing?> GetByIdAsync(Guid id)
+        {
+            return await _listingRepository.GetByIdAsync(id);
+        }
+
+        public async Task<Listing> CreateAsync(Listing listing)
+        {
+            listing.Id = Guid.NewGuid();
+            listing.CreatedAt = DateTime.UtcNow.AddHours(7);
+            listing.ListerId = Guid.Parse("01DE1B1B-8B1E-43BB-9654-16E7C9CB5324");
+
+            await _listingRepository.AddAsync(listing);
+            return listing;
+        }
+
+        public async Task<bool> UpdateAsync(Listing listing)
+        {
+            return await _listingRepository.UpdateAsync(listing);
+        }
+
+        public async Task<bool> DeleteAsync(Guid id)
+        {
+            return await _listingRepository.DeleteAsync(id);
+        }
     }
 }

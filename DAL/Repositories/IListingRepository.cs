@@ -12,6 +12,8 @@ namespace DAL.Repositories
         Task<List<Listing>> GetListings();
         Task<IEnumerable<Listing>> GetPendingListingsAsync();
         Task<Listing?> GetByIdAsync(Guid id);
-        Task UpdateAsync(Listing listing);
+        Task AddAsync(Listing listing);
+        Task<bool> UpdateAsync(Listing listing);
+        Task<bool> DeleteAsync(Guid id);
     }
 }
