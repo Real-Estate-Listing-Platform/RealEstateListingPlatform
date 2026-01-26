@@ -24,6 +24,18 @@ namespace RealEstateListingPlatform.Controllers
             return View(await _listingService.GetListings());
         }
 
+        public async Task<IActionResult> PendingListings()
+        {
+            var listings = await _listingService.GetPendingListingsAsync();
+            return View(listings);
+        }
+
+        public async Task<IActionResult> FilterByType(string type)
+        {
+            var listings = await _listingService.GetByTypeAsync(type);
+            return View("PendingListings", listings);
+        }
+
         //// GET: Listings/Details/5
         //public async Task<IActionResult> Details(Guid? id)
         //{

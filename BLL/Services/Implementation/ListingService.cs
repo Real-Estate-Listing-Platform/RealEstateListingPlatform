@@ -32,6 +32,17 @@ namespace BLL.Services.Implementation
             return result;
         }
 
+        public async Task<IEnumerable<Listing>> GetByTypeAsync(String type)
+        {
+            var listings = await _listingRepository.GetPendingListingsAsync();
+            if (listings == null)
+            {
+                return Enumerable.Empty<Listing>();
+            }
+            var filteredListings = listings.Where(l => l.TransactionType == type);
+            return filteredListings;
+        }
+
         public async Task<bool> ApproveListingAsync(Guid id)
         {
             var listing = await _listingRepository.GetByIdAsync(id);
