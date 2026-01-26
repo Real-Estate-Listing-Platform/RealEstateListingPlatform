@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace DAL.Models;
 
-public partial class ListingMedium
+public partial class ListingMedia
 {
     public Guid Id { get; set; }
 

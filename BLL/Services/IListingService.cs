@@ -12,6 +12,7 @@ namespace BLL.Services
         public Task<List<Listing>> GetListings();
         Task<IEnumerable<Listing>> GetPendingListingsAsync(); 
         Task<IEnumerable<Listing>> GetByTypeAsync(String type);
+        Task<Listing> GetByIdAsync(Guid id);
         Task<bool> ApproveListingAsync(Guid id);
         Task<bool> RejectListingAsync(Guid id);
     }

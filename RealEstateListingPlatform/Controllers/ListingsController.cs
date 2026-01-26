@@ -1,39 +1,95 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Mvc;
+using BLL.Services; 
+using RealEstateListingPlatform.Models;
 using DAL.Models;
-using BLL.Services;
+
 
 namespace RealEstateListingPlatform.Controllers
 {
+    [Route("api/[controller]")]
+    [ApiController]
     public class ListingsController : Controller
     {
-        private readonly IListingService _listingService;
-        public ListingsController(IListingService listingService)
-        {
-            this._listingService = listingService;
-        }
 
-        // GET: Listings
+        private readonly IListingService _listingService;
+
+        public ListingsController(IListingService listingService) => _listingService = listingService;
+
+        [HttpGet]
         public async Task<IActionResult> Index()
         {
-            return View(await _listingService.GetListings());
+            //return View(await _listingService.GetListings());
+            return Ok(await _listingService.GetListings());
         }
 
-        public async Task<IActionResult> PendingListings()
+        [HttpGet("{type}")] 
+        public async Task<IActionResult> BrowseListings(string type)
         {
-            var listings = await _listingService.GetPendingListingsAsync();
-            return View(listings);
+            
+            string dbType = type.Equals("Sale", StringComparison.OrdinalIgnoreCase) ? "Sell" : "Rent";
+            var listings = await _listingService.GetByTypeAsync(dbType);
+            var viewModel = (listings ?? Enumerable.Empty<Listing>()).Select(l => new ListingApprovalViewModel
+            {
+                Id = l.Id,
+                Title = l.Title,
+                Description = l.Description ?? "N/A",
+                Price = l.Price,
+                PropertyType = l.PropertyType ?? "N/A",
+                TransactionType = l.TransactionType ?? dbType,
+                ListerName = l.Lister?.DisplayName ?? "Unknown User",
+                Area = l.Area ?? "0",
+                Address = $"{l.StreetName}, {l.Ward}, {l.District}, {l.City}",
+                Bedrooms = l.Bedrooms,
+                Bathrooms = l.Bathrooms,
+                Floors = l.Floors,
+                LegalStatus = l.LegalStatus ?? "N/A",
+                FurnitureStatus = l.FurnitureStatus ?? "N/A",
+                Direction = l.Direction ?? "N/A",
+                CreatedAt = l.CreatedAt ?? DateTime.Now,
+                ImageUrl = l.ListingMedia?.OrderBy(m => m.Id).Select(m => m.Url).FirstOrDefault()
+                           ?? "https://tjh.com/wp-content/uploads/2023/06/TJH_HERO_TJH-HOME@2x-1.webp"
+            }).ToList();
+
+            ViewData["Title"] = type.Equals("Sale", StringComparison.OrdinalIgnoreCase)
+                ? "Property for Sale"
+                : "Property for Rent";
+            return View("PropertyListing", viewModel);
         }
 
-        public async Task<IActionResult> FilterByType(string type)
+        [HttpGet("PropertyDetail/{id}")]
+        public async Task<IActionResult> PropertyDetail(Guid id)
         {
-            var listings = await _listingService.GetByTypeAsync(type);
-            return View("PendingListings", listings);
+            var property = await _listingService.GetByIdAsync(id);
+
+            if (property == null)
+            {
+                return NotFound(); 
+            }
+   
+            var viewModel = new ListingApprovalViewModel
+            {
+                Id = property.Id,
+                Title = property.Title,
+                Description = property.Description ?? "N/A",
+                Price = property.Price,
+                PropertyType = property.PropertyType ?? "N/A",
+                TransactionType = property.TransactionType ?? "N/A",
+                ListerName = property.Lister?.DisplayName ?? "Unknown User",
+                Area = property.Area ?? "0",
+                Address = $"{property.StreetName}, {property.Ward}, {property.District}, {property.City}",
+                Bedrooms = property.Bedrooms,
+                Bathrooms = property.Bathrooms,
+                Floors = property.Floors,
+                LegalStatus = property.LegalStatus ?? "N/A",
+                FurnitureStatus = property.FurnitureStatus ?? "N/A",
+                Direction = property.Direction ?? "N/A",
+                CreatedAt = property.CreatedAt ?? DateTime.Now,
+                ImageUrl = property.ListingMedia?.OrderBy(m => m.Id).Select(m => m.Url).FirstOrDefault()
+                   ?? "https://tjh.com/wp-content/uploads/2023/06/TJH_HERO_TJH-HOME@2x-1.webp"
+            };
+
+            ViewData["Title"] = "Property Detail";
+            return View("PropertyDetail", viewModel); 
         }
 
         //// GET: Listings/Details/5
