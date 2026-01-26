@@ -12,6 +12,7 @@ namespace BLL.Services.Implementation
     public class ListingService : IListingService
     {
         private readonly IListingRepository _listingRepository;
+        
         public ListingService(IListingRepository listingRepository)
         {
             _listingRepository = listingRepository;
@@ -32,6 +33,23 @@ namespace BLL.Services.Implementation
             return result;
         }
 
+        public async Task<IEnumerable<Listing>> GetByTypeAsync(String type)
+        {
+            var listings = await _listingRepository.GetPendingListingsAsync();
+            if (listings == null)
+            {
+                return Enumerable.Empty<Listing>();
+            }
+            var filteredListings = listings.Where(l => l.TransactionType == type);
+            return filteredListings;
+        }
+
+        public async Task<Listing> GetByIdAsync(Guid id)
+        {
+            var listing = await _listingRepository.GetByIdAsync(id);
+            return listing!;
+        }
+        
         public async Task<bool> ApproveListingAsync(Guid id)
         {
             var listing = await _listingRepository.GetByIdAsync(id);

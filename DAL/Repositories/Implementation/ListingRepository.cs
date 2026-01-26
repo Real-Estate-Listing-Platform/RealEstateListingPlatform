@@ -20,7 +20,7 @@ namespace DAL.Repositories.Implementation
         public async Task<IEnumerable<Listing>> GetPendingListingsAsync()
         {
             var result = await _context.Listings
-                .Include(l => l.Lister)
+                .Include(l => l.Lister).Include(nameof(Listing.ListingMedia))
                 .Where(l => l.Status == "PendingReview")
                 .ToListAsync();
             return result;
@@ -28,7 +28,9 @@ namespace DAL.Repositories.Implementation
 
         public async Task<Listing?> GetByIdAsync(Guid id)
         {
-            return await _context.Listings.FindAsync(id);
+            return await _context.Listings.Include(l => l.Lister)
+                                          .Include(nameof(Listing.ListingMedia))
+                                          .FirstOrDefaultAsync(l => l.Id == id);
         }
 
         public async Task UpdateAsync(Listing listing)
