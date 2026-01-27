@@ -1,22 +1,84 @@
+@using System.Text
+@{
+    var token = Context.Request.Cookies["JWToken"];
+    var isAuthenticated = !string.IsNullOrEmpty(token);
+    var displayName = string.Empty;
+    var userId = string.Empty;
+
+    if (isAuthenticated)
+    {
+        try
+        {
+            var decoded = Encoding.UTF8.GetString(Convert.FromBase64String(token));
+            var parts = decoded.Split(':');
+            if (parts.Length >= 3)
+            {
+                displayName = parts[0];
+                userId = parts[1];
+            }
+        }
+        catch
+        {
+            isAuthenticated = false;
+        }
+    }
+}
+
 <ul class="navbar-nav">
-@if (Context.Request.Cookies["JWToken"] != null)
-{
-    <li class="nav-item">
-        <span class="nav-link text-dark">Welcome!</span>
-    </li>
-    <li class="nav-item">
-        <form id="logoutForm" class="form-inline" asp-controller="Account" asp-action="Logout" method="post">
-            <button id="logout" type="submit" class="nav-link btn btn-link text-dark border-0">Logout</button>
-        </form>
-    </li>
-}
-else
-{
-    <li class="nav-item">
-        <a class="nav-link text-dark" id="register" asp-area="" asp-controller="Account" asp-action="Register">Register</a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link text-dark" id="login" asp-area="" asp-controller="Account" asp-action="Login">Login</a>
-    </li>
-}
+    @if (isAuthenticated)
+    {
+        <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle text-dark" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="bi bi-person-circle me-1"></i> @displayName
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item" href="#"><i class="bi bi-person me-2"></i> My Account</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                    <a class="dropdown-item" asp-controller="Contact" asp-action="MyLeads">
+                        <i class="bi bi-envelope me-2"></i> My Leads
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item" asp-controller="Contact" asp-action="Notifications">
+                        <i class="bi bi-bell me-2"></i> Notifications
+                        <span class="badge bg-primary rounded-pill ms-2" id="notificationCount"></span>
+                    </a>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                    <form asp-controller="Account" asp-action="Logout" method="post" id="logoutForm">
+                        <button type="submit" class="dropdown-item text-danger">
+                            <i class="bi bi-box-arrow-right me-2"></i> Logout
+                        </button>
+                    </form>
+                </li>
+            </ul>
+        </li>
+    }
+    else
+    {
+        <li class="nav-item">
+            <a class="nav-link text-dark" asp-controller="Account" asp-action="Login">Login</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-dark" asp-controller="Account" asp-action="Register">Register</a>
+        </li>
+    }
 </ul>
+
+<script>
+    $(document).ready(function() {
+        // Load notification count if authenticated
+        @if (isAuthenticated)
+        {
+                <text>
+                $.get('@Url.Action("GetNotificationCount", "Contact")', function(data) {
+                    if (data.count > 0) {
+                        $('#notificationCount').text(data.count).show();
+                    }
+                });
+                </text>
+        }
+    });
+</script>
