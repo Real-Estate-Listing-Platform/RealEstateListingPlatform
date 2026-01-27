@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using BLL.Services;
 using RealEstateListingPlatform.Models;
 
+
 namespace RealEstateListingPlatform.Controllers
 {
     [Route("api/[controller]")]
@@ -20,6 +21,7 @@ namespace RealEstateListingPlatform.Controllers
             return Ok(await _listingService.GetListings());
         }
 
+<<<<<<< HEAD
         [HttpGet("/Listings/AllListings")]
         public async Task<IActionResult> AllListings([FromQuery] List<string>? propertyType = null, [FromQuery] string? location = null, [FromQuery] string? maxPrice = null)
         {
