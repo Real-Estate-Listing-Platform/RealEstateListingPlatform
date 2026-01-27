@@ -1,8 +1,13 @@
-﻿@model IEnumerable<RealEstateListingPlatform.Models.ListingApprovalViewModel>
+@model IEnumerable<RealEstateListingPlatform.Models.ListingApprovalViewModel>
 
 @{
     ViewData["Title"] = "Listings";
     Layout = "_Layout";
+    var formAction = ViewData["FilterFormAction"]?.ToString() ?? Url.Action("AllListings");
+    var formType = ViewData["FilterFormType"]?.ToString();
+    var filterLocation = ViewData["FilterLocation"]?.ToString() ?? "";
+    var filterPropertyTypes = (ViewData["FilterPropertyTypes"] as IEnumerable<string>)?.ToList() ?? new List<string>();
+    var filterMaxPriceRaw = ViewData["FilterMaxPriceRaw"]?.ToString() ?? "";
 }
 
 <div class="container pt-5 mt-5 mb-5">
@@ -10,39 +15,45 @@
         <aside class="col-lg-3">
             <div class="card border-0 shadow-sm rounded-4 p-3 mb-4 sticky-top" style="top: 100px;">
                 <h5 class="fw-bold mb-3">Search filters</h5>
-
-                <div class="mb-3">
-                    <label class="form-label small fw-bold">Area</label>
-                    <select class="form-select form-select-sm border-light bg-light">
-                        <option>All in HCMC</option>
-                        <option>District 1</option>
-                        <option>District 7</option>
-                        <option>Thu Duc City</option>
-                    </select>
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label small fw-bold">Price</label>
-                    <input type="range" class="form-range" min="0" max="100" id="priceRange">
-                    <div class="d-flex justify-content-between small text-muted">
-                        <span>0</span>
-                        <span>100 B+</span>
+                <form method="get" action="@formAction" id="searchFiltersForm">
+                    @if (!string.IsNullOrEmpty(formType))
+                    {
+                        <input type="hidden" name="type" value="@formType" />
+                    }
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Area</label>
+                        <input type="text" name="location" class="form-control form-control-sm border-light bg-light" placeholder="Quận, phường, đường, thành phố..." value="@filterLocation" />
                     </div>
-                </div>
 
-                <div class="mb-3">
-                    <label class="form-label small fw-bold">Property Type</label>
-                    <div class="form-check small">
-                        <input class="form-check-input" type="checkbox" checked>
-                        <label class="form-check-label">Apartment</label>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Price</label>
+                        <input type="text" name="maxPrice" id="maxPriceInput" class="form-control form-control-sm border-light bg-light" placeholder="VD: 5 tỷ, 5B, 5000000000" value="@filterMaxPriceRaw" />
+                        <p class="small text-muted mt-1 mb-0">Mức giá gợi ý:</p>
+                        <div class="d-flex flex-wrap gap-1 mt-1">
+                            <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill price-suggestion" data-value="">Bất kỳ</button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill price-suggestion" data-value="1 tỷ">Dưới 1 tỷ</button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill price-suggestion" data-value="5 tỷ">1–5 tỷ</button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill price-suggestion" data-value="10 tỷ">5–10 tỷ</button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill price-suggestion" data-value="50 tỷ">10–50 tỷ</button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill price-suggestion" data-value="100 tỷ">50 tỷ+</button>
+                        </div>
                     </div>
-                    <div class="form-check small">
-                        <input class="form-check-input" type="checkbox">
-                        <label class="form-check-label">Townhouses</label>
-                    </div>
-                </div>
 
-                <button class="btn btn-auth-primary w-100 rounded-pill btn-sm mt-2">Apply</button>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Property Type</label>
+                        <div class="d-flex flex-column gap-1">
+                            @if (filterPropertyTypes.Contains("Apartment", StringComparer.OrdinalIgnoreCase)) { <label class="form-check small"><input class="form-check-input" type="checkbox" name="propertyType" value="Apartment" checked /> Apartment</label> } else { <label class="form-check small"><input class="form-check-input" type="checkbox" name="propertyType" value="Apartment" /> Apartment</label> }
+                            @if (filterPropertyTypes.Contains("Land", StringComparer.OrdinalIgnoreCase)) { <label class="form-check small"><input class="form-check-input" type="checkbox" name="propertyType" value="Land" checked /> Land</label> } else { <label class="form-check small"><input class="form-check-input" type="checkbox" name="propertyType" value="Land" /> Land</label> }
+                            @if (filterPropertyTypes.Contains("Villa", StringComparer.OrdinalIgnoreCase)) { <label class="form-check small"><input class="form-check-input" type="checkbox" name="propertyType" value="Villa" checked /> Villa</label> } else { <label class="form-check small"><input class="form-check-input" type="checkbox" name="propertyType" value="Villa" /> Villa</label> }
+                            @if (filterPropertyTypes.Contains("Office", StringComparer.OrdinalIgnoreCase)) { <label class="form-check small"><input class="form-check-input" type="checkbox" name="propertyType" value="Office" checked /> Office</label> } else { <label class="form-check small"><input class="form-check-input" type="checkbox" name="propertyType" value="Office" /> Office</label> }
+                            @if (filterPropertyTypes.Contains("Townhouse", StringComparer.OrdinalIgnoreCase)) { <label class="form-check small"><input class="form-check-input" type="checkbox" name="propertyType" value="Townhouse" checked /> Townhouse</label> } else { <label class="form-check small"><input class="form-check-input" type="checkbox" name="propertyType" value="Townhouse" /> Townhouse</label> }
+                            @if (filterPropertyTypes.Contains("Room", StringComparer.OrdinalIgnoreCase)) { <label class="form-check small"><input class="form-check-input" type="checkbox" name="propertyType" value="Room" checked /> Room</label> } else { <label class="form-check small"><input class="form-check-input" type="checkbox" name="propertyType" value="Room" /> Room</label> }
+                            @if (filterPropertyTypes.Contains("Penthouse", StringComparer.OrdinalIgnoreCase)) { <label class="form-check small"><input class="form-check-input" type="checkbox" name="propertyType" value="Penthouse" checked /> Penthouse</label> } else { <label class="form-check small"><input class="form-check-input" type="checkbox" name="propertyType" value="Penthouse" /> Penthouse</label> }
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-auth-primary w-100 rounded-pill btn-sm mt-2">Apply</button>
+                </form>
             </div>
         </aside>
 
@@ -74,6 +85,7 @@
                                     <div class="property-icons text-muted small">
                                         <span><i class="bi bi-door-open"></i> @item.Bedrooms</span>
                                         <span class="ms-2"><i class="bi bi-droplet"></i> @item.Bathrooms</span>
+                                        <span class="ms-2 d-inline-flex align-items-center" title="Floors"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 24 24"><path d="M2 19h4v-4h4v-4h4v-4h4V3H2v4h4v4H2v4h4v4H2z"/></svg> <span class="ms-1">@item.Floors</span></span>
                                         <span class="ms-2"><i class="bi bi-aspect-ratio"></i> @(item.Area)m²</span>
                                     </div>
                                 </div>
@@ -126,4 +138,17 @@
             }
         }
     </style>
+}
+
+@section Scripts {
+    <script>
+        (function () {
+            var input = document.getElementById('maxPriceInput');
+            document.querySelectorAll('.price-suggestion').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    if (input) input.value = this.getAttribute('data-value') || '';
+                });
+            });
+        })();
+    </script>
 }

@@ -1,4 +1,4 @@
-﻿
+
 @model IEnumerable<RealEstateListingPlatform.Models.ListingApprovalViewModel>
 @{
     ViewData["Title"] = "Find Your Dream Home"; 
@@ -16,27 +16,32 @@
                     A place that connects genuine real estate values.
                 </p>
                 <div class="search-box-container shadow-lg search-wrapper p-2 bg-white">
-                    <form class="row g-0 align-items-center">
+                    <form class="row g-0 align-items-center" method="get" action="/Listings/AllListings">
                         <div class="col-md-4 px-3 border-end">
                             <div class="d-flex align-items-center">
                                 <i class="bi bi-geo-alt text-primary me-2"></i>
-                                <input type="text" class="form-control border-0" placeholder="Where are you looking?">
+                                <input type="text" name="location" class="form-control border-0" placeholder="Where are you looking?" value="">
                             </div>
                         </div>
                         <div class="col-md-3 px-3 border-end">
                             <div class="d-flex align-items-center">
                                 <i class="bi bi-house text-primary me-2"></i>
-                                <select class="form-select border-0">
-                                    <option selected>Type</option>
-                                    <option>Apartment</option>
-                                    <option>Penthouse</option>
+                                <select class="form-select border-0" name="propertyType">
+                                    <option value="">Type</option>
+                                    <option value="Apartment">Apartment</option>
+                                    <option value="Land">Land</option>
+                                    <option value="Villa">Villa</option>
+                                    <option value="Office">Office</option>
+                                    <option value="Townhouse">Townhouse</option>
+                                    <option value="Room">Room</option>
+                                    <option value="Penthouse">Penthouse</option>
                                 </select>
                             </div>
                         </div>
                         <div class="col-md-3 px-3">
                             <div class="d-flex align-items-center">
                                 <i class="bi bi-cash-stack text-primary me-2"></i>
-                                <input type="text" class="form-control border-0" placeholder="Max Price">
+                                <input type="text" name="maxPrice" class="form-control border-0" placeholder="Max Price" value="">
                             </div>
                         </div>
                         <div class="col-md-2 p-1">
@@ -57,7 +62,7 @@
             <h2 class="fw-bold">Featured Listings</h2>
             <p class="text-muted">Handpicked properties just for you.</p>
         </div>
-        <a href="#" class="btn btn-outline-secondary btn-sm rounded-pill px-4">View All</a>
+        <a asp-controller="Listings" asp-action="AllListings" class="btn btn-outline-secondary btn-sm rounded-pill px-4">View All</a>
     </div>
 
     <div class="row g-4">
@@ -78,6 +83,7 @@
                                 <span><i class="bi bi-door-open"></i> @item.Bedrooms</span>
                                 <span class="ms-2"><i class="bi bi-droplet"></i> @item.Bathrooms</span>
                                 <span class="ms-2"><i class="bi bi-aspect-ratio"></i> @(item.Area)</span>
+                                <span class="ms-2 icon-stairs-inline"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 19h4v-4h4v-4h4v-4h4V3H2v4h4v4H2v4h4v4H2z"/></svg></span> @(item.Floors?.ToString() ?? "—")
                             </div>
                         </div>
                     </div>
@@ -192,6 +198,14 @@
         .bg-auth-primary {
             background-color: var(--primary-color);
         }
+
+        .icon-stairs-inline {
+            display: inline-block;
+            vertical-align: middle;
+        }
+            .icon-stairs-inline svg {
+                vertical-align: middle;
+            }
 
         </style>
 

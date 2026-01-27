@@ -1,4 +1,4 @@
-﻿@model RealEstateListingPlatform.Models.ListingApprovalViewModel
+@model RealEstateListingPlatform.Models.ListingApprovalViewModel
 
 @{
     ViewData["Title"] = "Property Detail";
@@ -17,8 +17,31 @@
 
     <div class="row g-4">
         <div class="col-lg-8">
-            <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
-                <img src="@Model.ImageUrl" class="img-fluid w-100" style="max-height: 500px; object-fit: cover;" alt="@Model.Title">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4 position-relative" id="detail-gallery">
+                @if (Model.ImageUrls != null && Model.ImageUrls.Count > 1)
+                {
+                    <div class="detail-gallery-viewport">
+                        <div class="detail-gallery-track" id="detail-gallery-track">
+                            @foreach (var url in Model.ImageUrls)
+                            {
+                                <div class="detail-gallery-slide">
+                                    <img src="@url" class="img-fluid w-100" style="max-height: 500px; object-fit: cover;" alt="@Model.Title">
+                                </div>
+                            }
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-light btn-lg position-absolute top-50 start-0 translate-middle-y rounded-circle shadow ms-2 ms-md-3 detail-prev" style="opacity: 0.9; z-index: 2;" aria-label="Ảnh trước">
+                        <i class="bi bi-chevron-left"></i>
+                    </button>
+                    <button type="button" class="btn btn-light btn-lg position-absolute top-50 end-0 translate-middle-y rounded-circle shadow me-2 me-md-3 detail-next" style="opacity: 0.9; z-index: 2;" aria-label="Ảnh tiếp theo">
+                        <i class="bi bi-chevron-right"></i>
+                    </button>
+                    <div class="position-absolute bottom-0 end-0 m-3 px-3 py-1 rounded-pill bg-dark bg-opacity-50 text-white small" id="detail-counter" style="z-index: 2;">1 / @Model.ImageUrls.Count</div>
+                }
+                else
+                {
+                    <img src="@(Model.ImageUrls?.Any() == true ? Model.ImageUrls[0] : Model.ImageUrl)" class="img-fluid w-100" style="max-height: 500px; object-fit: cover;" alt="@Model.Title">
+                }
             </div>
 
             <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
@@ -52,6 +75,15 @@
                             <i class="bi bi-droplet fs-4 text-primary"></i>
                             <p class="small mb-0 mt-2 text-muted">Bathroom</p>
                             <p class="fw-bold mb-0">@Model.Bathrooms</p>
+                        </div>
+                    </div>
+                    <div class="col-4 col-md-3">
+                        <div class="p-3 bg-light rounded-4">
+                            <span class="icon-stairs fs-4 text-primary" aria-hidden="true">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 24 24"><path d="M2 19h4v-4h4v-4h4v-4h4V3H2v4h4v4H2v4h4v4H2z"/></svg>
+                            </span>
+                            <p class="small mb-0 mt-2 text-muted">Floors</p>
+                            <p class="fw-bold mb-0">@(Model.Floors?.ToString() ?? "—")</p>
                         </div>
                     </div>
                 </div>
@@ -117,5 +149,66 @@
                 top: 0 !important;
             }
         }
+
+        #detail-gallery .detail-prev:hover,
+        #detail-gallery .detail-next:hover {
+            opacity: 1 !important;
+        }
+
+        .detail-gallery-viewport {
+            overflow: hidden;
+            max-height: 500px;
+        }
+
+        .detail-gallery-track {
+            display: flex;
+            transition: transform 0.4s ease-out;
+        }
+
+        .detail-gallery-slide {
+            flex: 0 0 100%;
+            min-width: 100%;
+        }
+
+            .detail-gallery-slide img {
+                display: block;
+                width: 100%;
+                max-height: 500px;
+                object-fit: cover;
+            }
+
+        .icon-stairs {
+            display: inline-block;
+            line-height: 1;
+        }
+            .icon-stairs svg {
+                display: block;
+                vertical-align: middle;
+            }
     </style>
+}
+
+@section Scripts {
+    <script>
+        (function () {
+            var track = document.getElementById('detail-gallery-track');
+            if (!track) return;
+
+            var slides = track.querySelectorAll('.detail-gallery-slide');
+            var total = slides.length;
+            if (total <= 1) return;
+
+            var counterEl = document.getElementById('detail-counter');
+            var idx = 0;
+
+            function showImage(i) {
+                idx = ((i % total) + total) % total;
+                track.style.transform = 'translateX(-' + (idx * 100) + '%)';
+                if (counterEl) counterEl.textContent = (idx + 1) + ' / ' + total;
+            }
+
+            document.querySelector('.detail-prev')?.addEventListener('click', function () { showImage(idx - 1); });
+            document.querySelector('.detail-next')?.addEventListener('click', function () { showImage(idx + 1); });
+        })();
+    </script>
 }

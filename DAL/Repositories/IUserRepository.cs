@@ -12,5 +12,6 @@ namespace DAL.Repositories
         Task DeleteUser(User user);
         Task<bool> UserExists(string email);
         IQueryable<User> GetUsersQueryable();
+        Task<int> DeleteUnverifiedUsersOlderThanAsync(DateTime threshold, CancellationToken cancellationToken = default);
     }
 }

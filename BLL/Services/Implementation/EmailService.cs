@@ -1,10 +1,10 @@
 using MailKit.Net.Smtp;
 using MailKit.Security;
+using Microsoft.Extensions.Configuration;
 using MimeKit;
 using MimeKit.Text;
-using BLL.Services;
 
-namespace RealEstateListingPlatform.Services
+namespace BLL.Services.Implementation
 {
     public class EmailService : IEmailService
     {

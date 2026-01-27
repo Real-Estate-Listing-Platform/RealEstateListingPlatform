@@ -13,7 +13,7 @@ namespace BLL.Services
         Task<bool> IsEmailRegistered(string email);
         Task UpdateUser(User user);
         Task DeleteUser(User user);
-        
+        Task<int> CleanupUnverifiedUsersOlderThanAsync(DateTime threshold, CancellationToken cancellationToken = default);
         string HashPassword(string password);
         bool VerifyPassword(string password, string hash);
     }
