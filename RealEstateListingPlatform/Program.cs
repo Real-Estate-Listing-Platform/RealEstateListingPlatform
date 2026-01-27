@@ -5,7 +5,6 @@ using DAL.Repositories;
 using DAL.Repositories.Implementation;
 using BLL.Services;
 using BLL.Services.Implementation;
-using RealEstateListingPlatform.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<RealEstateListingPlatformContext>(options =>

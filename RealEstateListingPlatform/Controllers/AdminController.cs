@@ -1,5 +1,4 @@
-﻿using BLL.Services;
-using DAL.Models;
+using BLL.Services;
 using Microsoft.AspNetCore.Mvc;
 using RealEstateListingPlatform.Models;
 
@@ -14,11 +13,8 @@ namespace RealEstateListingPlatform.Controllers
         public async Task<IActionResult> ListingOperations()
         {
             var listings = await _listingService.GetPendingListingsAsync();
-
             if (listings == null)
-            {
-                listings = new List<Listing>();
-            }
+                return View(new List<ListingApprovalViewModel>());
 
             var viewModel = listings.Select(l => new ListingApprovalViewModel
             {

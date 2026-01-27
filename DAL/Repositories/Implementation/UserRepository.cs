@@ -54,5 +54,12 @@ namespace DAL.Repositories.Implementation
         {
             return _context.Users.AsQueryable();
         }
+
+        public async Task<int> DeleteUnverifiedUsersOlderThanAsync(DateTime threshold, CancellationToken cancellationToken = default)
+        {
+            return await _context.Users
+                .Where(u => !u.IsEmailVerified && u.CreatedAt < threshold)
+                .ExecuteDeleteAsync(cancellationToken);
+        }
     }
 }
