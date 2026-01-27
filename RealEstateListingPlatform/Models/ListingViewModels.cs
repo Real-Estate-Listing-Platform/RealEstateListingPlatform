@@ -54,7 +54,7 @@ namespace RealEstateListingPlatform.Models
         public string? Status { get; set; }
         public DateTime? CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
-        public List<ListingMedium>? ExistingMedia { get; set; }
+        public List<ListingMedia>? ExistingMedia { get; set; }
         
         // Package-related properties
         public bool IsBoosted { get; set; }

@@ -25,10 +25,10 @@ namespace DAL.Repositories
         // Delete (Hard delete)
         Task<bool> DeleteAsync(Guid id);
         
-        // Media Management
-        Task AddMediaAsync(Guid listingId, ListingMedium media);
-        Task<List<ListingMedium>> GetMediaByListingIdAsync(Guid listingId);
-        Task DeleteMediaAsync(Guid mediaId);
+    // Media Management
+    Task AddMediaAsync(Guid listingId, ListingMedia media);
+    Task<List<ListingMedia>> GetMediaByListingIdAsync(Guid listingId);
+    Task DeleteMediaAsync(Guid mediaId);
         
         // Validation Helpers
         Task<bool> ExistsAsync(Guid id);

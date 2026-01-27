@@ -1,4 +1,4 @@
-﻿@model RealEstateListingPlatform.Models.PropertyViewModel
+﻿@model RealEstateListingPlatform.Models.ListingApprovalViewModel
 
 @{
     ViewData["Title"] = "Property Detail";
@@ -10,7 +10,7 @@
     <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a asp-action="Index" asp-controller="Home">Home</a></li>
-            <li class="breadcrumb-item"><a asp-action="PropertyListing" asp-route-type="@(Model.Status == "For Sale" ? "sale" : "rent")">@(Model.Status == "For Sale" ? "For Sale" : "For Rent")</a></li>
+            <li class="breadcrumb-item"><a asp-action="PropertyListing" asp-route-type="@(Model.TransactionType == "Sell" ? "sale" : "rent")">@(Model.TransactionType == "Sell" ? "For Sale" : "For Rent")</a></li>
             <li class="breadcrumb-item active">Detail</li>
         </ol>
     </nav>
@@ -24,11 +24,11 @@
             <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
                 <div class="d-flex justify-content-between align-items-start mb-3">
                     <h2 class="fw-bold text-dark">@Model.Title</h2>
-                    <span class="badge @(Model.Status == "For Sale" ? "bg-primary" : "bg-success") rounded-pill px-3 py-2">
-                        @(Model.Status == "For Sale" ? "For Sale" : "For Rent")
+                    <span class="badge @(Model.TransactionType == "Sell" ? "bg-primary" : "bg-success") rounded-pill px-3 py-2">
+                        @(Model.TransactionType == "Sell" ? "For Sale" : "For Rent")
                     </span>
                 </div>
-                <p class="text-muted"><i class="bi bi-geo-alt-fill text-primary"></i> @Model.Location</p>
+                <p class="text-muted"><i class="bi bi-geo-alt-fill text-primary"></i> @Model.Address</p>
                 <hr class="my-4 opacity-25">
 
                 <h5 class="fw-bold mb-3">Overall Information</h5>
@@ -58,9 +58,7 @@
 
                 <h5 class="fw-bold mb-3">Detail Description</h5>
                 <p class="text-muted lh-lg">
-                    Welcome to your ideal living space. This property boasts a prime location, modern design, and full amenities. 
-                    Located in a safe and quiet residential area, close to public amenities such as schools, hospitals, and shopping centers.
-                    Suitable for both residential purposes and sustainable investment returns.
+                    @Model.Description
                 </p>
             </div>
         </div>
@@ -83,7 +81,7 @@
 
                 <div class="agent-info d-flex align-items-center">
                     <div>
-                        <p class="mb-0 fw-bold">Nguyễn Lê Nhật</p>
+                        <p class="mb-0 fw-bold">@Model.ListerName</p>
                         <p class="small text-muted mb-0">Consultant</p>
                     </div>
                 </div>

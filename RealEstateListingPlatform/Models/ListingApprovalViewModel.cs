@@ -1,4 +1,6 @@
-﻿namespace RealEstateListingPlatform.Models
+﻿using static System.Net.WebRequestMethods;
+
+namespace RealEstateListingPlatform.Models
 {
     public class ListingApprovalViewModel
     {
@@ -22,6 +24,19 @@
         public string LegalStatus { get; set; } = string.Empty;
         public string FurnitureStatus { get; set; } = string.Empty;
         public string Direction { get; set; } = string.Empty;
-        public DateTime CreatedAt { get; set; }
+        public DateTime CreatedAt { get; set; }        
+        public string ImageUrl { get; set; } = string.Empty;
+        public string Currency { get; set; } = "VND";
+        public string FormattedPrice
+        {
+            get
+            {
+                if (Price >= 1000000000)
+                    return $"{Price / 1000000000:N1} B";
+                if (Price >= 1000000)
+                    return $"{Price / 1000000:N0} M";
+                return Price.ToString("N0") + " VNĐ";
+            }
+        }
     }
 }

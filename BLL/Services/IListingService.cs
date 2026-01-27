@@ -14,6 +14,8 @@ namespace BLL.Services
         // Existing methods
         Task<List<Listing>> GetListings();
         Task<IEnumerable<Listing>> GetPendingListingsAsync(); 
+        Task<IEnumerable<Listing>> GetByTypeAsync(String type);
+        Task<Listing> GetByIdAsync(Guid id);
         Task<bool> ApproveListingAsync(Guid id);
         Task<bool> RejectListingAsync(Guid id);
 
@@ -35,7 +37,7 @@ namespace BLL.Services
         // Media Management
         Task<ServiceResult<bool>> AddMediaToListingAsync(Guid listingId, IFormFile file, string mediaType);
         Task<ServiceResult<bool>> DeleteMediaAsync(Guid mediaId, Guid userId);
-        Task<ServiceResult<List<ListingMedium>>> GetListingMediaAsync(Guid listingId);
+        Task<ServiceResult<List<ListingMedia>>> GetListingMediaAsync(Guid listingId);
 
         // Validation
         Task<ServiceResult<bool>> ValidateListingDataAsync(ListingCreateDto dto);

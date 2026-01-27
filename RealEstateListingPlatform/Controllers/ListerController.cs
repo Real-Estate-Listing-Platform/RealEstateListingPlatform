@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
-using System.Threading.Tasks;
+using BLL.DTOs;
 using BLL.Services;
 using DAL.Models;
 
@@ -344,11 +344,11 @@ namespace RealEstateListingPlatform.Controllers
                 Status = listing.Status,
                 CreatedAt = listing.CreatedAt,
                 UpdatedAt = listing.UpdatedAt,
-                ExistingMedia = listing.ListingMedia?.ToList() ?? new List<ListingMedium>()
+                ExistingMedia = listing.ListingMedia?.ToList() ?? new List<ListingMedia>()
             };
         }
 
-        private BLL.DTOs.ListingCreateDto MapToCreateDto(RealEstateListingPlatform.Models.ListingCreateViewModel model)
+        private ListingCreateDto MapToCreateDto(RealEstateListingPlatform.Models.ListingCreateViewModel model)
         {
             return new BLL.DTOs.ListingCreateDto
             {
@@ -409,7 +409,7 @@ namespace RealEstateListingPlatform.Controllers
             model.Status = listingResult.Data.Status;
             model.CreatedAt = listingResult.Data.CreatedAt;
             model.UpdatedAt = listingResult.Data.UpdatedAt;
-            model.ExistingMedia = listingResult.Data.ListingMedia?.ToList() ?? new List<ListingMedium>();
+            model.ExistingMedia = listingResult.Data.ListingMedia?.ToList() ?? new List<ListingMedia>();
         }
 
         // Mock Data Methods (for Customers only)

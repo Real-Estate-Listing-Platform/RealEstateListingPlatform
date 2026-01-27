@@ -21,7 +21,7 @@ namespace DAL.Repositories.Implementation
         public async Task<IEnumerable<Listing>> GetPendingListingsAsync()
         {
             var result = await _context.Listings
-                .Include(l => l.Lister)
+                .Include(l => l.Lister).Include(nameof(Listing.ListingMedia))
                 .Where(l => l.Status == "PendingReview")
                 .ToListAsync();
             return result;
@@ -29,7 +29,9 @@ namespace DAL.Repositories.Implementation
 
         public async Task<Listing?> GetByIdAsync(Guid id)
         {
-            return await _context.Listings.FindAsync(id);
+            return await _context.Listings.Include(l => l.Lister)
+                                          .Include(nameof(Listing.ListingMedia))
+                                          .FirstOrDefaultAsync(l => l.Id == id);
         }
 
         public async Task<Listing?> GetListingWithMediaAsync(Guid id)
@@ -98,7 +100,7 @@ namespace DAL.Repositories.Implementation
         }
 
         // Media Management
-        public async Task AddMediaAsync(Guid listingId, ListingMedium media)
+        public async Task AddMediaAsync(Guid listingId, ListingMedia media)
         {
             media.Id = Guid.NewGuid();
             media.ListingId = listingId;
@@ -106,7 +108,7 @@ namespace DAL.Repositories.Implementation
             await _context.SaveChangesAsync();
         }
 
-        public async Task<List<ListingMedium>> GetMediaByListingIdAsync(Guid listingId)
+        public async Task<List<ListingMedia>> GetMediaByListingIdAsync(Guid listingId)
         {
             return await _context.ListingMedia
                 .Where(m => m.ListingId == listingId)

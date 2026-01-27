@@ -14,8 +14,8 @@ namespace RealEstateListingPlatform.Models
             public string ImageUrl { get; set; } = "/images/default-property.jpg";
             public int Bedrooms { get; set; }
             public int Bathrooms { get; set; }
-            public double Area { get; set; } 
-            public string Status { get; set; } = "For Sale"; 
+            public double Area { get; set; }
+            public string Status { get; set; } = string.Empty;
             public DateTime CreatedDate { get; set; } = DateTime.Now;
             public string FormattedPrice
             {

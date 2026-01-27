@@ -25,7 +25,7 @@ namespace BLL.Services.Implementation
             IAuditService auditService,
             IPackageService packageService,
             IUserRepository userRepository)
-        {
+        { 
             _listingRepository = listingRepository;
             _priceHistoryService = priceHistoryService;
             _auditService = auditService;
@@ -49,6 +49,23 @@ namespace BLL.Services.Implementation
             return result;
         }
 
+        public async Task<IEnumerable<Listing>> GetByTypeAsync(String type)
+        {
+            var listings = await _listingRepository.GetPendingListingsAsync();
+            if (listings == null)
+            {
+                return Enumerable.Empty<Listing>();
+            }
+            var filteredListings = listings.Where(l => l.TransactionType == type);
+            return filteredListings;
+        }
+
+        public async Task<Listing> GetByIdAsync(Guid id)
+        {
+            var listing = await _listingRepository.GetByIdAsync(id);
+            return listing!;
+        }
+        
         public async Task<bool> ApproveListingAsync(Guid id)
         {
             var listing = await _listingRepository.GetByIdAsync(id);
@@ -413,10 +430,10 @@ namespace BLL.Services.Implementation
             return ServiceResult<bool>.SuccessResult(true, "Media deleted successfully");
         }
 
-        public async Task<ServiceResult<List<ListingMedium>>> GetListingMediaAsync(Guid listingId)
+        public async Task<ServiceResult<List<ListingMedia>>> GetListingMediaAsync(Guid listingId)
         {
             var media = await _listingRepository.GetMediaByListingIdAsync(listingId);
-            return ServiceResult<List<ListingMedium>>.SuccessResult(media);
+            return ServiceResult<List<ListingMedia>>.SuccessResult(media);
         }
 
         // Validation
@@ -476,7 +493,7 @@ namespace BLL.Services.Implementation
                     await file.CopyToAsync(stream);
                 }
 
-                var media = new ListingMedium
+                var media = new ListingMedia
                 {
                     ListingId = listingId,
                     MediaType = mediaType,

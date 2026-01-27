@@ -11,7 +11,7 @@ namespace DAL.Models
 
         public DbSet<User> Users { get; set; } = default!;
         public DbSet<Listing> Listings { get; set; } = default!;
-        public DbSet<ListingMedium> ListingMedia { get; set; } = default!;
+        public DbSet<ListingMedia> ListingMedia { get; set; } = default!;
         public DbSet<ListingPriceHistory> ListingPriceHistories { get; set; } = default!;
         public DbSet<ListingTour360> ListingTour360s { get; set; } = default!;
         public DbSet<Favorite> Favorites { get; set; } = default!;
