@@ -21,7 +21,6 @@ namespace RealEstateListingPlatform.Controllers
             return Ok(await _listingService.GetListings());
         }
 
-<<<<<<< HEAD
         [HttpGet("/Listings/AllListings")]
         public async Task<IActionResult> AllListings([FromQuery] List<string>? propertyType = null, [FromQuery] string? location = null, [FromQuery] string? maxPrice = null)
         {
