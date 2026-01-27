@@ -1,0 +1,424 @@
+@{
+    ViewData["Title"] = "Dashboard";
+    Layout = "~/Views/Shared/_ListerLayout.cshtml";
+    var stats = ViewBag.Stats;
+}
+
+<div class="dashboard-container">
+    <!-- Page Header -->
+    <div class="page-header mb-4">
+        <h1 class="page-title">
+            <i class="bi bi-speedometer2 me-2"></i>Dashboard
+        </h1>
+        <p class="page-subtitle text-muted">Welcome back! Here's what's happening with your listings today.</p>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="stat-card stat-card-primary">
+                <div class="stat-icon">
+                    <i class="bi bi-buildings"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 class="stat-number">@stats.TotalListings</h3>
+                    <p class="stat-label">Total Listings</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="stat-card stat-card-success">
+                <div class="stat-icon">
+                    <i class="bi bi-check-circle"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 class="stat-number">@stats.ActiveListings</h3>
+                    <p class="stat-label">Active Listings</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="stat-card stat-card-warning">
+                <div class="stat-icon">
+                    <i class="bi bi-clock-history"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 class="stat-number">@stats.PendingReview</h3>
+                    <p class="stat-label">Pending Review</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="stat-card stat-card-info">
+                <div class="stat-icon">
+                    <i class="bi bi-people"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 class="stat-number">@stats.TotalLeads</h3>
+                    <p class="stat-label">Total Leads</p>
+                    <span class="badge bg-danger">@stats.NewLeads New</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Revenue and Charts -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-8">
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h5 class="card-title">
+                        <i class="bi bi-bar-chart me-2"></i>Performance Overview
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-placeholder">
+                        <i class="bi bi-graph-up text-muted" style="font-size: 4rem;"></i>
+                        <p class="text-muted">Chart visualization coming soon</p>
+                        <p class="small text-muted">Views, Leads, and Conversion rates over time</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h5 class="card-title">
+                        <i class="bi bi-currency-dollar me-2"></i>Revenue
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="revenue-item mb-4">
+                        <p class="text-muted mb-1">Total Revenue</p>
+                        <h3 class="text-success mb-0">@stats.TotalRevenue.ToString("N0") VND</h3>
+                    </div>
+                    <div class="revenue-item">
+                        <p class="text-muted mb-1">This Month</p>
+                        <h4 class="text-primary mb-0">@stats.ThisMonthRevenue.ToString("N0") VND</h4>
+                        <small class="text-success">
+                            <i class="bi bi-arrow-up"></i> 12% from last month
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="dashboard-card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-clock-history me-2"></i>Recent Activity
+                    </h5>
+                    <a href="#" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    <div class="activity-list">
+                        <div class="activity-item">
+                            <div class="activity-icon bg-success">
+                                <i class="bi bi-check2"></i>
+                            </div>
+                            <div class="activity-content">
+                                <p class="activity-text">Listing "Luxury Apartment" was published</p>
+                                <small class="text-muted">2 hours ago</small>
+                            </div>
+                        </div>
+
+                        <div class="activity-item">
+                            <div class="activity-icon bg-info">
+                                <i class="bi bi-person-plus"></i>
+                            </div>
+                            <div class="activity-content">
+                                <p class="activity-text">New lead from Nguyen Van A</p>
+                                <small class="text-muted">4 hours ago</small>
+                            </div>
+                        </div>
+
+                        <div class="activity-item">
+                            <div class="activity-icon bg-primary">
+                                <i class="bi bi-pencil"></i>
+                            </div>
+                            <div class="activity-content">
+                                <p class="activity-text">Updated "Modern Villa" listing</p>
+                                <small class="text-muted">Yesterday</small>
+                            </div>
+                        </div>
+
+                        <div class="activity-item">
+                            <div class="activity-icon bg-warning">
+                                <i class="bi bi-eye"></i>
+                            </div>
+                            <div class="activity-content">
+                                <p class="activity-text">"Studio Apartment" reached 500 views</p>
+                                <small class="text-muted">2 days ago</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="dashboard-card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-star me-2"></i>Top Performing Listings
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="top-listings">
+                        <div class="top-listing-item">
+                            <div class="listing-rank">1</div>
+                            <div class="listing-info">
+                                <h6 class="listing-title">Studio Apartment for Rent</h6>
+                                <p class="listing-stats text-muted">
+                                    <i class="bi bi-eye"></i> 567 views • <i class="bi bi-people"></i> 23 leads
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="top-listing-item">
+                            <div class="listing-rank">2</div>
+                            <div class="listing-info">
+                                <h6 class="listing-title">Luxury Apartment Vinhomes</h6>
+                                <p class="listing-stats text-muted">
+                                    <i class="bi bi-eye"></i> 245 views • <i class="bi bi-people"></i> 12 leads
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="top-listing-item">
+                            <div class="listing-rank">3</div>
+                            <div class="listing-info">
+                                <h6 class="listing-title">Modern Villa Thu Duc</h6>
+                                <p class="listing-stats text-muted">
+                                    <i class="bi bi-eye"></i> 189 views • <i class="bi bi-people"></i> 8 leads
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .dashboard-container {
+        max-width: 1400px;
+    }
+
+    .page-header {
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    .page-title {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+    }
+
+    .page-subtitle {
+        font-size: 1rem;
+        margin-bottom: 0;
+    }
+
+    /* Stat Cards */
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    }
+
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.75rem;
+        flex-shrink: 0;
+    }
+
+    .stat-card-primary .stat-icon {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+
+    .stat-card-success .stat-icon {
+        background: linear-gradient(135deg, #56ab2f 0%, #a8e063 100%);
+        color: white;
+    }
+
+    .stat-card-warning .stat-icon {
+        background: linear-gradient(135deg, #f2994a 0%, #f2c94c 100%);
+        color: white;
+    }
+
+    .stat-card-info .stat-icon {
+        background: linear-gradient(135deg, #2193b0 0%, #6dd5ed 100%);
+        color: white;
+    }
+
+    .stat-content {
+        flex-grow: 1;
+    }
+
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+        color: #2c3e50;
+    }
+
+    .stat-label {
+        font-size: 0.9rem;
+        color: #7f8c8d;
+        margin-bottom: 0;
+    }
+
+    /* Dashboard Cards */
+    .dashboard-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        overflow: hidden;
+        height: 100%;
+    }
+
+    .dashboard-card .card-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid #f0f0f0;
+        background: white;
+    }
+
+    .dashboard-card .card-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .dashboard-card .card-body {
+        padding: 1.5rem;
+    }
+
+    /* Chart Placeholder */
+    .chart-placeholder {
+        height: 300px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: #f8f9fa;
+        border-radius: 8px;
+    }
+
+    /* Activity List */
+    .activity-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .activity-item {
+        display: flex;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+
+    .activity-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        flex-shrink: 0;
+    }
+
+    .activity-content {
+        flex-grow: 1;
+    }
+
+    .activity-text {
+        margin-bottom: 0.25rem;
+        color: #2c3e50;
+    }
+
+    /* Top Listings */
+    .top-listings {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .top-listing-item {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+        padding: 1rem;
+        background: #f8f9fa;
+        border-radius: 8px;
+    }
+
+    .listing-rank {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+    }
+
+    .listing-info {
+        flex-grow: 1;
+    }
+
+    .listing-title {
+        font-size: 0.95rem;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+        color: #2c3e50;
+    }
+
+    .listing-stats {
+        font-size: 0.85rem;
+        margin-bottom: 0;
+    }
+
+    .listing-stats i {
+        margin-right: 0.25rem;
+    }
+
+    /* Revenue */
+    .revenue-item {
+        padding: 1rem;
+        background: #f8f9fa;
+        border-radius: 8px;
+    }
+</style>

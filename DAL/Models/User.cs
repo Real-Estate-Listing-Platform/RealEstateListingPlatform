@@ -35,6 +35,10 @@ namespace DAL.Models
         public bool IsActive { get; set; } = true;
         public DateTime? LastLoginAt { get; set; }
 
+        // Free tier tracking
+        public int FreeListingsUsed { get; set; } = 0; // Track how many free listings used
+        public int MaxFreeListings { get; set; } = 1; // Default 1 free active listing
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     }

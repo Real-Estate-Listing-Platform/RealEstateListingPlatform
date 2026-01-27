@@ -19,5 +19,11 @@ namespace DAL.Models
         public DbSet<Notification> Notifications { get; set; } = default!;
         public DbSet<Report> Reports { get; set; } = default!;
         public DbSet<AuditLog> AuditLogs { get; set; } = default!;
+        
+        // Payment and Package system
+        public DbSet<ListingPackage> ListingPackages { get; set; } = default!;
+        public DbSet<UserPackage> UserPackages { get; set; } = default!;
+        public DbSet<Transaction> Transactions { get; set; } = default!;
+        public DbSet<ListingBoost> ListingBoosts { get; set; } = default!;
     }
 }

@@ -1,3 +1,6 @@
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using RealEstateListingPlatform.Models;
 using BLL.Services;
@@ -7,10 +10,12 @@ namespace RealEstateListingPlatform.Controllers
     public class AccountController : Controller
     {
         private readonly IAuthService _authService;
+        private readonly IUserService _userService;
 
-        public AccountController(IAuthService authService)
+        public AccountController(IAuthService authService, IUserService userService)
         {
             _authService = authService;
+            _userService = userService;
         }
 
         [HttpGet]
@@ -224,22 +229,30 @@ namespace RealEstateListingPlatform.Controllers
 
             if (result.Success)
             {
-                if (string.IsNullOrEmpty(result.Token))
+                var user = await _userService.GetUserByEmail(model.Email);
+                if (user == null)
                 {
-                    ModelState.AddModelError(string.Empty, "Login succeeded but token is missing.");
+                    ModelState.AddModelError(string.Empty, "Login failed: user not found.");
                     return View(model);
                 }
 
-                // Store token in Cookie
-                var cookieOptions = new CookieOptions
+                var claims = new List<Claim>
                 {
-                    HttpOnly = true,
-                    Secure = true,
-                    SameSite = SameSiteMode.Strict,
-                    Expires = model.RememberMe ? DateTime.UtcNow.AddDays(7) : null
+                    new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                    new Claim(ClaimTypes.Name, user.DisplayName),
+                    new Claim(ClaimTypes.Email, user.Email),
+                    new Claim(ClaimTypes.Role, user.Role)
                 };
 
-                Response.Cookies.Append("JWToken", result.Token!, cookieOptions);
+                var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+                var principal = new ClaimsPrincipal(identity);
+                var authProperties = new AuthenticationProperties
+                {
+                    IsPersistent = model.RememberMe,
+                    ExpiresUtc = model.RememberMe ? DateTimeOffset.UtcNow.AddDays(7) : null
+                };
+
+                await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal, authProperties);
 
                 return RedirectToAction("Index", "Home");
             }
@@ -253,9 +266,9 @@ namespace RealEstateListingPlatform.Controllers
         
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Logout()
+        public async Task<IActionResult> Logout()
         {
-            Response.Cookies.Delete("JWToken");
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             return RedirectToAction("Index", "Home");
         }
     }

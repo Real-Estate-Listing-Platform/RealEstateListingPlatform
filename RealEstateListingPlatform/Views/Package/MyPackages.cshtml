@@ -1,0 +1,247 @@
+@model List<BLL.DTOs.UserPackageDto>
+
+@{
+    ViewData["Title"] = "My Packages";
+    Layout = "~/Views/Shared/_ListerLayout.cshtml";
+    var activePackages = ViewBag.ActivePackages as List<BLL.DTOs.UserPackageDto> ?? new List<BLL.DTOs.UserPackageDto>();
+}
+
+<div class="container py-5">
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1 class="fw-bold mb-2">My Packages</h1>
+        <p class="text-muted">Manage your purchased packages and track usage</p>
+    </div>
+    <div class="col-md-4 text-md-end">
+        <a href="@Url.Action("Index")" class="btn btn-primary">
+            <i class="bi bi-cart-plus"></i> Buy More Packages
+        </a>
+    </div>
+</div>
+
+    <!-- Pending Payment Alert -->
+    @{
+        var pendingPackages = Model?.Where(p => p.Status == "Pending").ToList() ?? new List<BLL.DTOs.UserPackageDto>();
+    }
+    @if (pendingPackages.Any())
+    {
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            <h6 class="alert-heading">
+                <i class="bi bi-exclamation-triangle-fill"></i> Payment Required
+            </h6>
+            <p class="mb-2">
+                You have @pendingPackages.Count package@(pendingPackages.Count > 1 ? "s" : "") waiting for payment completion.
+                Complete your payment to activate your packages.
+            </p>
+            <hr>
+            <div class="d-flex gap-2">
+                <a href="@Url.Action("MyTransactions", "Payment")" class="btn btn-sm btn-warning">
+                    <i class="bi bi-credit-card-fill"></i> View Pending Transactions
+                </a>
+                <a href="@Url.Action("Index")" class="btn btn-sm btn-outline-warning">
+                    <i class="bi bi-cart-plus"></i> Buy New Package
+                </a>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Active Packages Summary -->
+    @if (activePackages.Any())
+    {
+        <div class="row mb-4">
+            <div class="col-12">
+                <h5 class="fw-bold mb-3"><i class="bi bi-check-circle-fill text-success"></i> Active Packages</h5>
+            </div>
+            @foreach (var userPackage in activePackages)
+            {
+                <div class="col-md-6 col-lg-4 mb-3">
+                    <div class="card border-success h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h6 class="card-title fw-bold mb-0">@userPackage.Package.Name</h6>
+                                <span class="badge bg-success">Active</span>
+                            </div>
+                            <p class="text-muted small mb-3">@userPackage.Package.Description</p>
+
+                            <div class="mb-2">
+                                @if (userPackage.RemainingListings.HasValue)
+                                {
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <small class="text-muted">Remaining Listings:</small>
+                                        <strong>@userPackage.RemainingListings</strong>
+                                    </div>
+                                }
+                                @if (userPackage.RemainingPhotos.HasValue && userPackage.RemainingPhotos > 0)
+                                {
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <small class="text-muted">Extra Photos:</small>
+                                        <strong>@userPackage.RemainingPhotos</strong>
+                                    </div>
+                                }
+                                @if (userPackage.VideoAvailable)
+                                {
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <small class="text-muted">Video Upload:</small>
+                                        <strong class="text-success">Enabled</strong>
+                                    </div>
+                                }
+                                @if (userPackage.RemainingBoosts.HasValue && userPackage.RemainingBoosts > 0)
+                                {
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <small class="text-muted">Boost Credits:</small>
+                                        <strong>@userPackage.RemainingBoosts</strong>
+                                    </div>
+                                }
+                            </div>
+
+                            @if (userPackage.ExpiresAt.HasValue)
+                            {
+                                var daysLeft = (userPackage.ExpiresAt.Value - DateTime.UtcNow).Days;
+                                <div class="mt-2 pt-2 border-top">
+                                    <small class="text-muted">
+                                        <i class="bi bi-clock"></i> Expires in @daysLeft day@(daysLeft != 1 ? "s" : "")
+                                    </small>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info mb-4">
+            <i class="bi bi-info-circle"></i> You don't have any active packages. 
+            <a href="@Url.Action("Index")" class="alert-link">Browse packages</a> to enhance your listings.
+        </div>
+    }
+
+    <!-- All Packages History -->
+    <div class="row">
+        <div class="col-12">
+            <h5 class="fw-bold mb-3"><i class="bi bi-clock-history"></i> Package History</h5>
+        </div>
+    </div>
+
+    @if (Model == null || !Model.Any())
+    {
+        <div class="row">
+            <div class="col-12 text-center py-5">
+                <i class="bi bi-inbox display-1 text-muted"></i>
+                <p class="text-muted mt-3">No package history</p>
+                <a href="@Url.Action("Index")" class="btn btn-primary">Browse Packages</a>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            <div class="col-12">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Package</th>
+                                <th>Type</th>
+                                <th>Price</th>
+                                <th>Purchased</th>
+                                <th>Status</th>
+                                <th>Details</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var userPackage in Model)
+                            {
+                                <tr>
+                                    <td>
+                                        <strong>@userPackage.Package.Name</strong><br/>
+                                        <small class="text-muted">@userPackage.Package.Description</small>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary">@userPackage.Package.PackageType.Replace("_", " ")</span>
+                                    </td>
+                                    <td class="fw-bold">@userPackage.Package.Price.ToString("N0") VND</td>
+                                    <td>@userPackage.PurchasedAt.ToString("MMM dd, yyyy")</td>
+                                    <td>
+                                        @switch (userPackage.Status)
+                                        {
+                                            case "Active":
+                                                <span class="badge bg-success">
+                                                    <i class="bi bi-check-circle-fill"></i> Active
+                                                </span>
+                                                break;
+                                            case "Pending":
+                                                <span class="badge bg-warning">
+                                                    <i class="bi bi-hourglass-split"></i> Pending Payment
+                                                </span>
+                                                break;
+                                            case "Expired":
+                                                <span class="badge bg-secondary">
+                                                    <i class="bi bi-clock-history"></i> Expired
+                                                </span>
+                                                break;
+                                            case "Used":
+                                                <span class="badge bg-info">
+                                                    <i class="bi bi-check-all"></i> Used
+                                                </span>
+                                                break;
+                                            case "Cancelled":
+                                                <span class="badge bg-danger">
+                                                    <i class="bi bi-x-circle-fill"></i> Cancelled
+                                                </span>
+                                                break;
+                                            default:
+                                                <span class="badge bg-warning">@userPackage.Status</span>
+                                                break;
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (userPackage.Status == "Pending")
+                                        {
+                                            <a href="@Url.Action("MyTransactions", "Payment")" class="btn btn-sm btn-warning">
+                                                <i class="bi bi-credit-card"></i> Complete Payment
+                                            </a>
+                                        }
+                                        else if (userPackage.Status == "Active")
+                                        {
+                                            if (userPackage.RemainingListings.HasValue)
+                                            {
+                                                <span class="badge bg-light text-dark me-1">@userPackage.RemainingListings Listings</span>
+                                            }
+                                            if (userPackage.RemainingPhotos.HasValue && userPackage.RemainingPhotos > 0)
+                                            {
+                                                <span class="badge bg-light text-dark me-1">@userPackage.RemainingPhotos Photos</span>
+                                            }
+                                            if (userPackage.VideoAvailable)
+                                            {
+                                                <span class="badge bg-light text-dark me-1">
+                                                    <i class="bi bi-camera-video"></i> Video
+                                                </span>
+                                            }
+                                            if (userPackage.RemainingBoosts.HasValue && userPackage.RemainingBoosts > 0)
+                                            {
+                                                <span class="badge bg-light text-dark me-1">@userPackage.RemainingBoosts Boosts</span>
+                                            }
+                                        }
+                                        else if (userPackage.ExpiresAt.HasValue)
+                                        {
+                                            <small class="text-muted">
+                                                Expired @userPackage.ExpiresAt.Value.ToString("MMM dd, yyyy")
+                                            </small>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@section Styles {
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+}
