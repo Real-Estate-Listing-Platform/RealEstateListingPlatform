@@ -1,4 +1,4 @@
-﻿USE master;
+USE master;
 GO
 
 -- 1. XÓA DATABASE CŨ (NẾU TỒN TẠI)
@@ -44,7 +44,7 @@ CREATE TABLE Users (
 );
 GO
 
--- BẢNG 2: LISTINGS (Đã thêm cột District)
+-- BẢNG 2: LISTINGS
 CREATE TABLE Listings (
     Id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
     ListerId UNIQUEIDENTIFIER NOT NULL,
@@ -58,9 +58,9 @@ CREATE TABLE Listings (
     -- Location
     StreetName NVARCHAR(100),
     Ward NVARCHAR(50),
-    District NVARCHAR(50),   -- <== ĐÃ THÊM CỘT NÀY
+    District NVARCHAR(50),
     City NVARCHAR(50),
-    Area NVARCHAR(50),
+    Area NVARCHAR(50), -- Lưu ý: Nên dùng DECIMAL cho Area để tính toán, ở đây để NVARCHAR theo đề bài cũ
     HouseNumber NVARCHAR(50),
     Latitude DECIMAL(9, 6),
     Longitude DECIMAL(9, 6),
@@ -205,10 +205,17 @@ GO
 PRINT '>>> Dang nap du lieu mau...';
 
 DECLARE @AdminId UNIQUEIDENTIFIER = NEWID();
-DECLARE @ListerId UNIQUEIDENTIFIER = NEWID();
+DECLARE @ListerId UNIQUEIDENTIFIER = NEWID(); -- Biến này sẽ dùng chung cho tất cả Listings
 DECLARE @SeekerId UNIQUEIDENTIFIER = NEWID();
+
+-- Khai báo ID cho các Listings
 DECLARE @Listing1 UNIQUEIDENTIFIER = NEWID();
 DECLARE @Listing2 UNIQUEIDENTIFIER = NEWID();
+DECLARE @L3 UNIQUEIDENTIFIER = NEWID();
+DECLARE @L4 UNIQUEIDENTIFIER = NEWID();
+DECLARE @L5 UNIQUEIDENTIFIER = NEWID();
+DECLARE @L6 UNIQUEIDENTIFIER = NEWID();
+DECLARE @L7 UNIQUEIDENTIFIER = NEWID();
 
 -- 1. Insert Users
 INSERT INTO Users (Id, DisplayName, Role, Email, PasswordHash, IsActive, IsEmailVerified, Bio, AvatarUrl)
@@ -217,17 +224,48 @@ VALUES
 (@ListerId, N'Phạm Hương Broker', 'Lister', 'lister@gmail.com', 'HASH_PASS_123', 1, 1, N'Chuyên căn hộ cao cấp Q9', 'https://i.pravatar.cc/150?u=lister'),
 (@SeekerId, N'Nguyễn Sinh Viên', 'Seeker', 'student@fpt.edu.vn', 'HASH_PASS_123', 1, 1, N'Tìm trọ giá rẻ', 'https://i.pravatar.cc/150?u=student');
 
--- 2. Insert Listings (Bây giờ đã có cột District nên sẽ không lỗi nữa)
-INSERT INTO Listings (Id, ListerId, Title, TransactionType, PropertyType, Price, City, District, Ward, StreetName, Bedrooms, Area, Status, ExpirationDate)
+-- 2. Insert Listings
+-- Lưu ý: Đã thêm cột 'Bathrooms' và 'Description' vào danh sách cột INSERT để khớp với dữ liệu mới
+INSERT INTO Listings (Id, ListerId, Title, TransactionType, PropertyType, Price, City, District, Ward, StreetName, Bedrooms, Bathrooms, Area, Status, ExpirationDate, Description)
 VALUES 
-(@Listing1, @ListerId, N'Bán căn hộ Vinhome Grand Park 2PN', 'Sell', 'Apartment', 3500000000, N'Hồ Chí Minh', N'Thủ Đức', N'Long Thạnh Mỹ', N'Nguyễn Xiển', 2, '59m2', 'Published', DATEADD(day, 60, GETDATE())),
-(@Listing2, @ListerId, N'Cho thuê phòng trọ gần ĐH FPT', 'Rent', 'Room', 3500000, N'Hồ Chí Minh', N'Thủ Đức', N'Tăng Nhơn Phú', N'Lê Văn Việt', 1, '25m2', 'Published', DATEADD(day, 30, GETDATE()));
+-- Tin 1
+(@Listing1, @ListerId, N'Bán căn hộ Vinhome Grand Park 2PN', 'Sell', 'Apartment', 3500000000, N'Hồ Chí Minh', N'Thủ Đức', N'Long Thạnh Mỹ', N'Nguyễn Xiển', 2, 2, '59m2', 'Published', DATEADD(day, 60, GETDATE()), N'Căn hộ view công viên, tầng trung đẹp.'),
+-- Tin 2
+(@Listing2, @ListerId, N'Cho thuê phòng trọ gần ĐH FPT', 'Rent', 'Room', 3500000, N'Hồ Chí Minh', N'Thủ Đức', N'Tăng Nhơn Phú', N'Lê Văn Việt', 1, 1, '25m2', 'Published', DATEADD(day, 30, GETDATE()), N'Phòng trọ an ninh, giờ giấc tự do.'),
+-- Tin 3 (Mới)
+(@L3, @ListerId, N'Biệt thự Thảo Điền có hồ bơi, sân vườn rộng', 'Sell', 'Villa', 45000000000, N'Hồ Chí Minh', N'Thủ Đức', N'Thảo Điền', N'Nguyễn Văn Hưởng', 5, 6, '500m2', 'Published', DATEADD(day, 90, GETDATE()), N'Biệt thự đơn lập, full nội thất châu Âu, khu an ninh 24/7.'),
+-- Tin 4 (Mới)
+(@L4, @ListerId, N'Văn phòng hạng A view Bitexco, sàn trống suốt', 'Rent', 'Office', 55000000, N'Hồ Chí Minh', N'Quận 1', N'Bến Nghé', N'Nguyễn Huệ', 0, 2, '120m2', 'Published', DATEADD(day, 30, GETDATE()), N'Văn phòng ngay phố đi bộ, miễn phí phí quản lý 1 năm đầu.'),
+-- Tin 5 (Mới)
+(@L5, @ListerId, N'Đất thổ cư Củ Chi, mặt tiền đường nhựa', 'Sell', 'Land', 1800000000, N'Hồ Chí Minh', N'Củ Chi', N'Tân Phú Trung', N'Hương Lộ 2', 0, 0, '200m2', 'Published', DATEADD(day, 120, GETDATE()), N'Sổ hồng riêng, xây dựng tự do, gần bệnh viện Xuyên Á.'),
+-- Tin 6 (Mới)
+(@L6, @ListerId, N'Căn hộ Studio Full nội thất gần Hutech, UEF', 'Rent', 'Apartment', 7500000, N'Hồ Chí Minh', N'Bình Thạnh', N'Phường 25', N'Ung Văn Khiêm', 1, 1, '35m2', 'Published', DATEADD(day, 15, GETDATE()), N'Giờ giấc tự do, ra vào vân tay, có máy giặt riêng.'),
+-- Tin 7 (Mới)
+(@L7, @ListerId, N'Nhà phố liền kề Phú Mỹ Hưng, kinh doanh tốt', 'Sell', 'Townhouse', 12500000000, N'Hồ Chí Minh', N'Quận 7', N'Tân Phong', N'Nguyễn Đức Cảnh', 4, 4, '100m2', 'Published', DATEADD(day, 60, GETDATE()), N'Đang có hợp đồng thuê 40tr/tháng, thích hợp đầu tư giữ tiền.');
 
 -- 3. Insert Media
 INSERT INTO ListingMedia (ListingId, MediaType, Url, SortOrder) VALUES
+-- Tin 1
 (@Listing1, 'image', 'https://example.com/vinhome_living.jpg', 1),
 (@Listing1, 'image', 'https://example.com/vinhome_bed.jpg', 2),
-(@Listing2, 'image', 'https://example.com/tro_front.jpg', 1);
+-- Tin 2
+(@Listing2, 'image', 'https://example.com/tro_front.jpg', 1),
+-- Tin 3
+(@L3, 'image', 'https://images.unsplash.com/photo-1613977257363-707ba9348227?auto=format&fit=crop&w=800&q=80', 1),
+(@L3, 'image', 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=800&q=80', 2),
+(@L3, 'image', 'https://images.unsplash.com/photo-1484154218962-a1c002085d2f?auto=format&fit=crop&w=800&q=80', 3),
+-- Tin 4
+(@L4, 'image', 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=800&q=80', 1),
+(@L4, 'image', 'https://images.unsplash.com/photo-1497215728101-856f4ea42174?auto=format&fit=crop&w=800&q=80', 2),
+-- Tin 5
+(@L5, 'image', 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=800&q=80', 1),
+(@L5, 'image', 'https://images.unsplash.com/photo-1524813686514-a57563d77965?auto=format&fit=crop&w=800&q=80', 2),
+-- Tin 6
+(@L6, 'image', 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=80', 1),
+(@L6, 'image', 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=800&q=80', 2),
+-- Tin 7
+(@L7, 'image', 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=800&q=80', 1),
+(@L7, 'image', 'https://images.unsplash.com/photo-1616486338812-3dadae4b4f9d?auto=format&fit=crop&w=800&q=80', 2);
 
 -- 4. Insert Lead
 INSERT INTO Leads (ListingId, SeekerId, ListerId, Message, AppointmentDate)
