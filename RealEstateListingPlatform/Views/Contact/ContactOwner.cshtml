@@ -1,0 +1,82 @@
+﻿@model RealEstateListingPlatform.Controllers.ContactViewModel
+
+@{
+    ViewData["Title"] = "Contact Property Owner";
+    Layout = "_Layout";
+}
+
+<div class="container mt-4 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-header bg-white border-0 pb-0 pt-4">
+                    <h2 class="fw-bold text-center">Contact Property Owner</h2>
+                    <p class="text-muted text-center">Send a message to the property owner</p>
+                </div>
+                <div class="card-body p-4">
+                    <form asp-action="ContactOwner" method="post">
+                        <input type="hidden" asp-for="ListingId" />
+
+                        <div class="mb-4">
+                            <label asp-for="Message" class="form-label fw-bold">Your Message *</label>
+                            <textarea asp-for="Message" class="form-control" rows="5"
+                                      placeholder="Hi, I'm interested in this property. Please contact me for more information..."
+                                      required></textarea>
+                            <span asp-validation-for="Message" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="AppointmentDate" class="form-label fw-bold">Preferred Appointment Date (Optional)</label>
+                            <input asp-for="AppointmentDate" type="datetime-local" class="form-control" />
+                            <span asp-validation-for="AppointmentDate" class="text-danger small"></span>
+                            <div class="form-text">Select a date and time if you'd like to schedule a viewing</div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg rounded-pill py-3 fw-bold">
+                                <i class="bi bi-send me-2"></i> Send Message
+                            </button>
+                            <a asp-controller="Listings" asp-action="PropertyDetail" asp-route-id="@Model.ListingId"
+                               class="btn btn-outline-secondary rounded-pill py-3">
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="mt-4 text-center">
+                <div class="alert alert-info">
+                    <h5 class="alert-heading"><i class="bi bi-info-circle me-2"></i>How it works</h5>
+                    <ul class="list-unstyled mb-0">
+                        <li><i class="bi bi-check-circle text-success me-2"></i>Your message will be sent directly to the property owner</li>
+                        <li><i class="bi bi-check-circle text-success me-2"></i>The owner will receive a notification</li>
+                        <li><i class="bi bi-check-circle text-success me-2"></i>You can track your messages in "My Leads"</li>
+                        <li><i class="bi bi-check-circle text-success me-2"></i>Owner can respond and update the status</li>
+                        <li><i class="bi bi-check-circle text-success me-2"></i>You will be notified when the owner responds</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        $(document).ready(function() {
+            // Set min date for appointment to tomorrow
+            var tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            var minDate = tomorrow.toISOString().slice(0, 16);
+            $('input[type="datetime-local"]').attr('min', minDate);
+
+            // Set max date to 3 months from now
+            var maxDate = new Date();
+            maxDate.setMonth(maxDate.getMonth() + 3);
+            var maxDateStr = maxDate.toISOString().slice(0, 16);
+            $('input[type="datetime-local"]').attr('max', maxDateStr);
+        });
+    </script>
+}
