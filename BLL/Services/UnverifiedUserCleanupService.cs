@@ -1,7 +1,8 @@
-using Microsoft.EntityFrameworkCore;
-using DAL.Repositories;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
-namespace RealEstateListingPlatform.Services
+namespace BLL.Services
 {
     public class UnverifiedUserCleanupService : BackgroundService
     {
@@ -24,20 +25,11 @@ namespace RealEstateListingPlatform.Services
                 {
                     using (var scope = _serviceProvider.CreateScope())
                     {
-                        var userRepo = scope.ServiceProvider.GetRequiredService<IUserRepository>();
-                        
-                        // Delete users who are NOT verified AND created more than 30 minutes ago
+                        var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
                         var threshold = DateTime.UtcNow.AddMinutes(-30);
-                        
-                        // ExecuteDeleteAsync is efficient for bulk deletes (EF Core 7+)
-                        var deletedCount = await userRepo.GetUsersQueryable()
-                            .Where(u => !u.IsEmailVerified && u.CreatedAt < threshold)
-                            .ExecuteDeleteAsync(stoppingToken);
-
+                        var deletedCount = await userService.CleanupUnverifiedUsersOlderThanAsync(threshold, stoppingToken);
                         if (deletedCount > 0)
-                        {
-                            _logger.LogInformation($"Cleaned up {deletedCount} unverified users.");
-                        }
+                            _logger.LogInformation("Cleaned up {Count} unverified users.", deletedCount);
                     }
                 }
                 catch (Exception ex)
@@ -45,7 +37,6 @@ namespace RealEstateListingPlatform.Services
                     _logger.LogError(ex, "Error occurred executing cleanup.");
                 }
 
-                // Wait for 29 minutes before next run
                 await Task.Delay(TimeSpan.FromMinutes(29), stoppingToken);
             }
         }

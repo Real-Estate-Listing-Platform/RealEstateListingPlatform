@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using BLL.Services;
 using BLL.Services.Implementation;
 using DAL.Models;
@@ -19,7 +19,7 @@ namespace RealEstateListingPlatform.Controllers
 
         public async Task<IActionResult> Index()
         {
-            var listings = await _listingService.GetPendingListingsAsync();
+            var listings = await _listingService.GetPublishedListingsAsync();
             var properties = listings.Select(l => new ListingApprovalViewModel
             {
                 Id = l.Id,
@@ -28,6 +28,7 @@ namespace RealEstateListingPlatform.Controllers
                 Price = l.Price,
                 Bedrooms = l.Bedrooms ?? 0,
                 Bathrooms = l.Bathrooms ?? 0,
+                Floors = l.Floors,
                 Area = l.Area ?? "0",
                 TransactionType = l.TransactionType == "Sell" ? "For Sale" : "For Rent",
                 ImageUrl = l.ListingMedia?.OrderBy(m => m.Id).Select(m => m.Url).FirstOrDefault()

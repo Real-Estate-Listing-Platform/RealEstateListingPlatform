@@ -1,4 +1,4 @@
-﻿using DAL.Models;
+using DAL.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace DAL.Repositories.Implementation
@@ -25,6 +25,15 @@ namespace DAL.Repositories.Implementation
                 .Where(l => l.Status == "PendingReview")
                 .ToListAsync();
             return result;
+        }
+
+        public async Task<IEnumerable<Listing>> GetPublishedListingsAsync()
+        {
+            return await _context.Listings
+                .Include(l => l.Lister)
+                .Include(nameof(Listing.ListingMedia))
+                .Where(l => l.Status == "Published")
+                .ToListAsync();
         }
 
         public async Task<Listing?> GetByIdAsync(Guid id)

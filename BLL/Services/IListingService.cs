@@ -1,4 +1,4 @@
-﻿using BLL.DTOs;
+using BLL.DTOs;
 using DAL.Models;
 using Microsoft.AspNetCore.Http;
 using System;
@@ -11,10 +11,11 @@ namespace BLL.Services
 {
     public interface IListingService
     {
-        // Existing methods
-        Task<List<Listing>> GetListings();
-        Task<IEnumerable<Listing>> GetPendingListingsAsync(); 
-        Task<IEnumerable<Listing>> GetByTypeAsync(String type);
+        public Task<List<Listing>> GetListings();
+        Task<IEnumerable<Listing>> GetPendingListingsAsync();
+        Task<IEnumerable<Listing>> GetPublishedListingsAsync();
+        Task<IEnumerable<Listing>> GetPublishedByTypeAsync(string type);
+        Task<IEnumerable<Listing>> GetByTypeAsync(string type);
         Task<Listing> GetByIdAsync(Guid id);
         Task<bool> ApproveListingAsync(Guid id);
         Task<bool> RejectListingAsync(Guid id);

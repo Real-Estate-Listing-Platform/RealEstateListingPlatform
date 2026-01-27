@@ -1,4 +1,4 @@
-﻿using DAL.Models;
+using DAL.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,6 +12,7 @@ namespace DAL.Repositories
         // Read operations
         Task<List<Listing>> GetListings();
         Task<IEnumerable<Listing>> GetPendingListingsAsync();
+        Task<IEnumerable<Listing>> GetPublishedListingsAsync();
         Task<Listing?> GetByIdAsync(Guid id);
         Task<Listing?> GetListingWithMediaAsync(Guid id);
         Task<List<Listing>> GetListingsByListerIdAsync(Guid listerId);

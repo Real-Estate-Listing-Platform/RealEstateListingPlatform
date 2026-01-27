@@ -1,4 +1,4 @@
-﻿using BLL.DTOs;
+using BLL.DTOs;
 using DAL.Models;
 using DAL.Repositories;
 using Microsoft.AspNetCore.Http;
@@ -47,6 +47,19 @@ namespace BLL.Services.Implementation
                 return Enumerable.Empty<Listing>();
             }
             return result;
+        }
+
+        public async Task<IEnumerable<Listing>> GetPublishedListingsAsync()
+        {
+            var result = await _listingRepository.GetPublishedListingsAsync();
+            return result ?? Enumerable.Empty<Listing>();
+        }
+
+        public async Task<IEnumerable<Listing>> GetPublishedByTypeAsync(string type)
+        {
+            var listings = await _listingRepository.GetPublishedListingsAsync();
+            if (listings == null) return Enumerable.Empty<Listing>();
+            return listings.Where(l => l.TransactionType == type).ToList();
         }
 
         public async Task<IEnumerable<Listing>> GetByTypeAsync(String type)

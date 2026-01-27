@@ -90,6 +90,11 @@ namespace BLL.Services.Implementation
             await _userRepository.DeleteUser(user);
         }
 
+        public async Task<int> CleanupUnverifiedUsersOlderThanAsync(DateTime threshold, CancellationToken cancellationToken = default)
+        {
+            return await _userRepository.DeleteUnverifiedUsersOlderThanAsync(threshold, cancellationToken);
+        }
+
         public string HashPassword(string password)
         {
             using (var sha256 = SHA256.Create())

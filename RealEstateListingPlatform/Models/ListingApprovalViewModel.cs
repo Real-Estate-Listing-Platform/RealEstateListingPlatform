@@ -1,4 +1,4 @@
-﻿using static System.Net.WebRequestMethods;
+using static System.Net.WebRequestMethods;
 
 namespace RealEstateListingPlatform.Models
 {
@@ -26,6 +26,8 @@ namespace RealEstateListingPlatform.Models
         public string Direction { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }        
         public string ImageUrl { get; set; } = string.Empty;
+        /// <summary>All image URLs for detail carousel (used on PropertyDetail). When null/empty, use ImageUrl.</summary>
+        public List<string> ImageUrls { get; set; } = new();
         public string Currency { get; set; } = "VND";
         public string FormattedPrice
         {

@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using BLL.Services; 
 using RealEstateListingPlatform.Models;
 using DAL.Models;
@@ -22,13 +22,102 @@ namespace RealEstateListingPlatform.Controllers
             return Ok(await _listingService.GetListings());
         }
 
-        [HttpGet("{type}")] 
-        public async Task<IActionResult> BrowseListings(string type)
+        [HttpGet("/Listings/AllListings")]
+        public async Task<IActionResult> AllListings([FromQuery] List<string>? propertyType = null, [FromQuery] string? location = null, [FromQuery] string? maxPrice = null)
         {
-            
+            var listings = await _listingService.GetPublishedListingsAsync();
+            decimal? maxPriceNum = TryParseMaxPrice(maxPrice);
+
+            if (listings != null)
+            {
+                if (propertyType != null && propertyType.Count > 0)
+                {
+                    var types = propertyType.Where(t => !string.IsNullOrWhiteSpace(t)).Select(t => t.Trim()).ToList();
+                    if (types.Count > 0)
+                        listings = listings.Where(l => types.Any(t => string.Equals(t, l.PropertyType, StringComparison.OrdinalIgnoreCase))).ToList();
+                }
+
+                if (!string.IsNullOrWhiteSpace(location))
+                {
+                    var loc = location.Trim();
+                    listings = listings.Where(l =>
+                        (l.StreetName != null && l.StreetName.Contains(loc, StringComparison.OrdinalIgnoreCase)) ||
+                        (l.Ward != null && l.Ward.Contains(loc, StringComparison.OrdinalIgnoreCase)) ||
+                        (l.District != null && l.District.Contains(loc, StringComparison.OrdinalIgnoreCase)) ||
+                        (l.City != null && l.City.Contains(loc, StringComparison.OrdinalIgnoreCase))
+                    ).ToList();
+                }
+
+                if (maxPriceNum.HasValue && maxPriceNum.Value > 0)
+                    listings = listings.Where(l => l.Price <= maxPriceNum.Value).ToList();
+            }
+
+            var viewModel = (listings?.Select(l => new ListingApprovalViewModel
+            {
+                Id = l.Id,
+                Title = l.Title,
+                Description = l.Description ?? "N/A",
+                Price = l.Price,
+                PropertyType = l.PropertyType ?? "N/A",
+                TransactionType = l.TransactionType == "Sell" ? "For Sale" : "For Rent",
+                ListerName = l.Lister?.DisplayName ?? "Unknown User",
+                Area = l.Area ?? "0",
+                Address = $"{l.StreetName}, {l.Ward}, {l.District}, {l.City}",
+                Bedrooms = l.Bedrooms,
+                Bathrooms = l.Bathrooms,
+                Floors = l.Floors,
+                LegalStatus = l.LegalStatus ?? "N/A",
+                FurnitureStatus = l.FurnitureStatus ?? "N/A",
+                Direction = l.Direction ?? "N/A",
+                CreatedAt = l.CreatedAt ?? DateTime.Now,
+                ImageUrl = l.ListingMedia?.OrderBy(m => m.Id).Select(m => m.Url).FirstOrDefault()
+                           ?? "https://tjh.com/wp-content/uploads/2023/06/TJH_HERO_TJH-HOME@2x-1.webp"
+            }) ?? Enumerable.Empty<ListingApprovalViewModel>()).ToList();
+
+            var titleParts = new List<string>();
+            if (propertyType != null && propertyType.Count > 0) titleParts.Add(string.Join(", ", propertyType));
+            if (!string.IsNullOrWhiteSpace(location)) titleParts.Add($"Khu vực: {location}");
+            if (maxPriceNum.HasValue) titleParts.Add($"Giá tối đa: {maxPriceNum.Value / 1_000_000_000:N0} tỷ");
+            ViewData["Title"] = titleParts.Count > 0 ? $"All Listings – {string.Join(", ", titleParts)}" : "All Listings";
+            ViewData["FilterPropertyTypes"] = propertyType ?? new List<string>();
+            ViewData["FilterLocation"] = location;
+            ViewData["FilterMaxPrice"] = maxPriceNum;
+            ViewData["FilterMaxPriceRaw"] = maxPrice;
+            ViewData["FilterFormAction"] = Url.Action("AllListings");
+            ViewData["FilterFormType"] = (string?)null;
+            return View("PropertyListing", viewModel);
+        }
+
+        [HttpGet("{type}")] 
+        public async Task<IActionResult> BrowseListings(string type, [FromQuery] List<string>? propertyType = null, [FromQuery] string? location = null, [FromQuery] string? maxPrice = null)
+        {
             string dbType = type.Equals("Sale", StringComparison.OrdinalIgnoreCase) ? "Sell" : "Rent";
-            var listings = await _listingService.GetByTypeAsync(dbType);
-            var viewModel = (listings ?? Enumerable.Empty<Listing>()).Select(l => new ListingApprovalViewModel
+            var listings = await _listingService.GetPublishedByTypeAsync(dbType);
+            decimal? maxPriceNum = TryParseMaxPrice(maxPrice);
+
+            if (listings != null)
+            {
+                if (propertyType != null && propertyType.Count > 0)
+                {
+                    var types = propertyType.Where(t => !string.IsNullOrWhiteSpace(t)).Select(t => t.Trim()).ToList();
+                    if (types.Count > 0)
+                        listings = listings.Where(l => types.Any(t => string.Equals(t, l.PropertyType, StringComparison.OrdinalIgnoreCase))).ToList();
+                }
+                if (!string.IsNullOrWhiteSpace(location))
+                {
+                    var loc = location.Trim();
+                    listings = listings.Where(l =>
+                        (l.StreetName != null && l.StreetName.Contains(loc, StringComparison.OrdinalIgnoreCase)) ||
+                        (l.Ward != null && l.Ward.Contains(loc, StringComparison.OrdinalIgnoreCase)) ||
+                        (l.District != null && l.District.Contains(loc, StringComparison.OrdinalIgnoreCase)) ||
+                        (l.City != null && l.City.Contains(loc, StringComparison.OrdinalIgnoreCase))
+                    ).ToList();
+                }
+                if (maxPriceNum.HasValue && maxPriceNum.Value > 0)
+                    listings = listings.Where(l => l.Price <= maxPriceNum.Value).ToList();
+            }
+
+            var viewModel = (listings?.Select(l => new ListingApprovalViewModel
             {
                 Id = l.Id,
                 Title = l.Title,
@@ -48,11 +137,15 @@ namespace RealEstateListingPlatform.Controllers
                 CreatedAt = l.CreatedAt ?? DateTime.Now,
                 ImageUrl = l.ListingMedia?.OrderBy(m => m.Id).Select(m => m.Url).FirstOrDefault()
                            ?? "https://tjh.com/wp-content/uploads/2023/06/TJH_HERO_TJH-HOME@2x-1.webp"
-            }).ToList();
+            }) ?? Enumerable.Empty<ListingApprovalViewModel>()).ToList();
 
-            ViewData["Title"] = type.Equals("Sale", StringComparison.OrdinalIgnoreCase)
-                ? "Property for Sale"
-                : "Property for Rent";
+            ViewData["Title"] = type.Equals("Sale", StringComparison.OrdinalIgnoreCase) ? "Property for Sale" : "Property for Rent";
+            ViewData["FilterPropertyTypes"] = propertyType ?? new List<string>();
+            ViewData["FilterLocation"] = location;
+            ViewData["FilterMaxPrice"] = maxPriceNum;
+            ViewData["FilterMaxPriceRaw"] = maxPrice;
+            ViewData["FilterFormAction"] = Url.Action("BrowseListings");
+            ViewData["FilterFormType"] = type;
             return View("PropertyListing", viewModel);
         }
 
@@ -66,6 +159,10 @@ namespace RealEstateListingPlatform.Controllers
                 return NotFound(); 
             }
    
+            var mediaUrls = property.ListingMedia?.OrderBy(m => m.Id).Select(m => m.Url ?? string.Empty).ToList() ?? new List<string>();
+            var defaultImg = "https://tjh.com/wp-content/uploads/2023/06/TJH_HERO_TJH-HOME@2x-1.webp";
+            if (mediaUrls.Count == 0) mediaUrls.Add(defaultImg);
+
             var viewModel = new ListingApprovalViewModel
             {
                 Id = property.Id,
@@ -84,8 +181,8 @@ namespace RealEstateListingPlatform.Controllers
                 FurnitureStatus = property.FurnitureStatus ?? "N/A",
                 Direction = property.Direction ?? "N/A",
                 CreatedAt = property.CreatedAt ?? DateTime.Now,
-                ImageUrl = property.ListingMedia?.OrderBy(m => m.Id).Select(m => m.Url).FirstOrDefault()
-                   ?? "https://tjh.com/wp-content/uploads/2023/06/TJH_HERO_TJH-HOME@2x-1.webp"
+                ImageUrl = mediaUrls.First(),
+                ImageUrls = mediaUrls
             };
 
             ViewData["Title"] = "Property Detail";
@@ -116,11 +213,11 @@ namespace RealEstateListingPlatform.Controllers
                 return NotFound();
             }
 
-            ViewData["Title"] = property.Title;
+            ViewData["Title"] = property.Title ?? "Property";
             return View(property);
         }
 
-        private List<PropertyViewModel> GetMockProperties()
+        private static List<PropertyViewModel> GetMockProperties()
         {
             return new List<PropertyViewModel>
             {
@@ -204,6 +301,17 @@ namespace RealEstateListingPlatform.Controllers
             };
         }
 
+        private static decimal? TryParseMaxPrice(string? s)
+        {
+            if (string.IsNullOrWhiteSpace(s)) return null;
+            var t = s.Trim();
+            if (decimal.TryParse(t.Replace(",", "").Replace(" ", ""), System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out var v))
+                return v < 1_000_000 ? v * 1_000_000_000 : v;
+            var m = System.Text.RegularExpressions.Regex.Match(t, @"(\d+(?:[.,]\d+)?)\s*(tỷ|ty|B|b)?", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+            if (m.Success && decimal.TryParse(m.Groups[1].Value.Replace(",", "."), System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out var num))
+                return string.IsNullOrEmpty(m.Groups[2].Value) ? (num < 1_000_000 ? num * 1_000_000_000 : num) : num * 1_000_000_000;
+            return null;
+        }
 
         //// GET: Listings/Details/5
         //public async Task<IActionResult> Details(Guid? id)
