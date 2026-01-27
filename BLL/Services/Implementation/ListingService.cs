@@ -251,6 +251,34 @@ namespace BLL.Services.Implementation
             return ServiceResult<List<Listing>>.SuccessResult(listings);
         }
 
+        public async Task<ServiceResult<PaginatedResult<Listing>>> GetMyListingsFilteredAsync(Guid listerId, ListingFilterParameters parameters)
+        {
+            var (items, totalCount) = await _listingRepository.GetListingsFilteredAsync(
+                listerId,
+                parameters.SearchTerm,
+                parameters.Status,
+                parameters.TransactionType,
+                parameters.PropertyType,
+                parameters.City,
+                parameters.District,
+                parameters.MinPrice,
+                parameters.MaxPrice,
+                parameters.SortBy,
+                parameters.SortOrder,
+                parameters.PageNumber,
+                parameters.PageSize);
+
+            var paginatedResult = new PaginatedResult<Listing>
+            {
+                Items = items,
+                PageNumber = parameters.PageNumber,
+                PageSize = parameters.PageSize,
+                TotalCount = totalCount
+            };
+
+            return ServiceResult<PaginatedResult<Listing>>.SuccessResult(paginatedResult);
+        }
+
         public async Task<ServiceResult<Listing>> GetListingWithMediaAsync(Guid id)
         {
             var listing = await _listingRepository.GetListingWithMediaAsync(id);

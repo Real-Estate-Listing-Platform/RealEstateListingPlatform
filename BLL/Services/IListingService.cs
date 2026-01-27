@@ -25,6 +25,7 @@ namespace BLL.Services
         // Read (Enhanced)
         Task<ServiceResult<Listing>> GetListingByIdAsync(Guid id);
         Task<ServiceResult<List<Listing>>> GetMyListingsAsync(Guid listerId);
+        Task<ServiceResult<PaginatedResult<Listing>>> GetMyListingsFilteredAsync(Guid listerId, ListingFilterParameters parameters);
         Task<ServiceResult<Listing>> GetListingWithMediaAsync(Guid id);
 
         // Update

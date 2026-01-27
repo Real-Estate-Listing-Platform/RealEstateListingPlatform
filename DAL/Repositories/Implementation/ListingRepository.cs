@@ -51,6 +51,108 @@ namespace DAL.Repositories.Implementation
                 .ToListAsync();
         }
 
+        public async Task<(List<Listing> Items, int TotalCount)> GetListingsFilteredAsync(
+            Guid listerId,
+            string? searchTerm,
+            string? status,
+            string? transactionType,
+            string? propertyType,
+            string? city,
+            string? district,
+            decimal? minPrice,
+            decimal? maxPrice,
+            string sortBy,
+            string sortOrder,
+            int pageNumber,
+            int pageSize)
+        {
+            var query = _context.Listings
+                .Where(l => l.ListerId == listerId)
+                .AsQueryable();
+
+            // Apply search filter
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                searchTerm = searchTerm.ToLower();
+                query = query.Where(l =>
+                    l.Title.ToLower().Contains(searchTerm) ||
+                    (l.Description != null && l.Description.ToLower().Contains(searchTerm)) ||
+                    (l.District != null && l.District.ToLower().Contains(searchTerm)) ||
+                    (l.City != null && l.City.ToLower().Contains(searchTerm)));
+            }
+
+            // Apply status filter
+            if (!string.IsNullOrWhiteSpace(status))
+            {
+                query = query.Where(l => l.Status == status);
+            }
+
+            // Apply transaction type filter
+            if (!string.IsNullOrWhiteSpace(transactionType))
+            {
+                query = query.Where(l => l.TransactionType == transactionType);
+            }
+
+            // Apply property type filter
+            if (!string.IsNullOrWhiteSpace(propertyType))
+            {
+                query = query.Where(l => l.PropertyType == propertyType);
+            }
+
+            // Apply city filter
+            if (!string.IsNullOrWhiteSpace(city))
+            {
+                query = query.Where(l => l.City == city);
+            }
+
+            // Apply district filter
+            if (!string.IsNullOrWhiteSpace(district))
+            {
+                query = query.Where(l => l.District == district);
+            }
+
+            // Apply price range filter
+            if (minPrice.HasValue)
+            {
+                query = query.Where(l => l.Price >= minPrice.Value);
+            }
+            if (maxPrice.HasValue)
+            {
+                query = query.Where(l => l.Price <= maxPrice.Value);
+            }
+
+            // Get total count before pagination
+            int totalCount = await query.CountAsync();
+
+            // Apply sorting
+            query = sortBy.ToLower() switch
+            {
+                "title" => sortOrder.ToLower() == "asc" 
+                    ? query.OrderBy(l => l.Title) 
+                    : query.OrderByDescending(l => l.Title),
+                "price" => sortOrder.ToLower() == "asc" 
+                    ? query.OrderBy(l => l.Price) 
+                    : query.OrderByDescending(l => l.Price),
+                "status" => sortOrder.ToLower() == "asc" 
+                    ? query.OrderBy(l => l.Status) 
+                    : query.OrderByDescending(l => l.Status),
+                "updatedat" => sortOrder.ToLower() == "asc" 
+                    ? query.OrderBy(l => l.UpdatedAt) 
+                    : query.OrderByDescending(l => l.UpdatedAt),
+                _ => sortOrder.ToLower() == "asc" 
+                    ? query.OrderBy(l => l.CreatedAt) 
+                    : query.OrderByDescending(l => l.CreatedAt)
+            };
+
+            // Apply pagination
+            var items = await query
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return (items, totalCount);
+        }
+
         // Create
         public async Task<Listing> CreateAsync(Listing listing)
         {

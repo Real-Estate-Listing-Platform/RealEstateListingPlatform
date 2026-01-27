@@ -15,6 +15,7 @@ namespace DAL.Repositories
         Task<Listing?> GetByIdAsync(Guid id);
         Task<Listing?> GetListingWithMediaAsync(Guid id);
         Task<List<Listing>> GetListingsByListerIdAsync(Guid listerId);
+        Task<(List<Listing> Items, int TotalCount)> GetListingsFilteredAsync(Guid listerId, string? searchTerm, string? status, string? transactionType, string? propertyType, string? city, string? district, decimal? minPrice, decimal? maxPrice, string sortBy, string sortOrder, int pageNumber, int pageSize);
         
         // Create
         Task<Listing> CreateAsync(Listing listing);

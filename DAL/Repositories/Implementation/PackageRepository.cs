@@ -93,6 +93,87 @@ public class PackageRepository : IPackageRepository
             .ToListAsync();
     }
 
+    public async Task<(List<UserPackage> Items, int TotalCount)> GetUserPackagesFilteredAsync(
+        Guid userId,
+        string? searchTerm,
+        string? status,
+        string? packageType,
+        DateTime? purchasedAfter,
+        DateTime? purchasedBefore,
+        string sortBy,
+        string sortOrder,
+        int pageNumber,
+        int pageSize)
+    {
+        var query = _context.UserPackages
+            .Include(up => up.Package)
+            .Include(up => up.Transaction)
+            .Where(up => up.UserId == userId)
+            .AsQueryable();
+
+        // Apply search filter
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            searchTerm = searchTerm.ToLower();
+            query = query.Where(up =>
+                up.Package.Name.ToLower().Contains(searchTerm) ||
+                (up.Package.Description != null && up.Package.Description.ToLower().Contains(searchTerm)));
+        }
+
+        // Apply status filter
+        if (!string.IsNullOrWhiteSpace(status))
+        {
+            query = query.Where(up => up.Status == status);
+        }
+
+        // Apply package type filter
+        if (!string.IsNullOrWhiteSpace(packageType))
+        {
+            query = query.Where(up => up.Package.PackageType == packageType);
+        }
+
+        // Apply date range filter
+        if (purchasedAfter.HasValue)
+        {
+            query = query.Where(up => up.PurchasedAt >= purchasedAfter.Value);
+        }
+        if (purchasedBefore.HasValue)
+        {
+            query = query.Where(up => up.PurchasedAt <= purchasedBefore.Value);
+        }
+
+        // Get total count before pagination
+        int totalCount = await query.CountAsync();
+
+        // Apply sorting
+        query = sortBy.ToLower() switch
+        {
+            "name" => sortOrder.ToLower() == "asc" 
+                ? query.OrderBy(up => up.Package.Name) 
+                : query.OrderByDescending(up => up.Package.Name),
+            "price" => sortOrder.ToLower() == "asc" 
+                ? query.OrderBy(up => up.Package.Price) 
+                : query.OrderByDescending(up => up.Package.Price),
+            "status" => sortOrder.ToLower() == "asc" 
+                ? query.OrderBy(up => up.Status) 
+                : query.OrderByDescending(up => up.Status),
+            "expiresat" => sortOrder.ToLower() == "asc" 
+                ? query.OrderBy(up => up.ExpiresAt) 
+                : query.OrderByDescending(up => up.ExpiresAt),
+            _ => sortOrder.ToLower() == "asc" 
+                ? query.OrderBy(up => up.PurchasedAt) 
+                : query.OrderByDescending(up => up.PurchasedAt)
+        };
+
+        // Apply pagination
+        var items = await query
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return (items, totalCount);
+    }
+
     public async Task<UserPackage?> GetUserPackageByIdAsync(Guid id)
     {
         return await _context.UserPackages.FindAsync(id);

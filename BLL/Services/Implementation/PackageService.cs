@@ -121,6 +121,33 @@ public class PackageService : IPackageService
         return ServiceResult<List<UserPackageDto>>.SuccessResult(dtos);
     }
 
+    public async Task<ServiceResult<PaginatedResult<UserPackageDto>>> GetUserPackagesFilteredAsync(Guid userId, PackageFilterParameters parameters)
+    {
+        var (items, totalCount) = await _packageRepository.GetUserPackagesFilteredAsync(
+            userId,
+            parameters.SearchTerm,
+            parameters.Status,
+            parameters.PackageType,
+            parameters.PurchasedAfter,
+            parameters.PurchasedBefore,
+            parameters.SortBy,
+            parameters.SortOrder,
+            parameters.PageNumber,
+            parameters.PageSize);
+
+        var dtos = items.Select(MapToUserPackageDto).ToList();
+
+        var paginatedResult = new PaginatedResult<UserPackageDto>
+        {
+            Items = dtos,
+            PageNumber = parameters.PageNumber,
+            PageSize = parameters.PageSize,
+            TotalCount = totalCount
+        };
+
+        return ServiceResult<PaginatedResult<UserPackageDto>>.SuccessResult(paginatedResult);
+    }
+
     public async Task<ServiceResult<UserPackageDto>> GetUserPackageByIdAsync(Guid id)
     {
         var userPackage = await _packageRepository.GetUserPackageWithDetailsAsync(id);

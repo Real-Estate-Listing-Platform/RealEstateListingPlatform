@@ -16,6 +16,7 @@ public interface IPackageRepository
     // User package operations
     Task<List<UserPackage>> GetUserPackagesAsync(Guid userId);
     Task<List<UserPackage>> GetActiveUserPackagesAsync(Guid userId);
+    Task<(List<UserPackage> Items, int TotalCount)> GetUserPackagesFilteredAsync(Guid userId, string? searchTerm, string? status, string? packageType, DateTime? purchasedAfter, DateTime? purchasedBefore, string sortBy, string sortOrder, int pageNumber, int pageSize);
     Task<UserPackage?> GetUserPackageByIdAsync(Guid id);
     Task<UserPackage> CreateUserPackageAsync(UserPackage userPackage);
     Task UpdateUserPackageAsync(UserPackage userPackage);

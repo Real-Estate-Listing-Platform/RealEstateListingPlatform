@@ -1,4 +1,4 @@
-@model List<DAL.Models.Listing>
+@model BLL.DTOs.PaginatedResult<DAL.Models.Listing>
 
 @{
     ViewData["Title"] = "Listings";
@@ -45,76 +45,111 @@
 
     <!-- Filter and Search -->
     <div class="filter-section mb-4">
-        <div class="row g-3">
-            <div class="col-md-4">
-                <div class="input-group">
-                    <span class="input-group-text">
-                        <i class="bi bi-search"></i>
-                    </span>
-                    <input type="text" class="form-control" placeholder="Search listings...">
+        <form asp-controller="Lister" asp-action="Listings" method="get">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="bi bi-search"></i>
+                        </span>
+                        <input type="text" name="searchTerm" class="form-control" placeholder="Search by title, location..." 
+                               value="@ViewBag.CurrentSearch">
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <select name="status" class="form-select">
+                        <option value="">All Status</option>
+                        <option value="Published" selected="@(ViewBag.CurrentStatus == "Published")">Published</option>
+                        <option value="Draft" selected="@(ViewBag.CurrentStatus == "Draft")">Draft</option>
+                        <option value="PendingReview" selected="@(ViewBag.CurrentStatus == "PendingReview")">Pending Review</option>
+                        <option value="Rejected" selected="@(ViewBag.CurrentStatus == "Rejected")">Rejected</option>
+                        <option value="Expired" selected="@(ViewBag.CurrentStatus == "Expired")">Expired</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select name="transactionType" class="form-select">
+                        <option value="">All Types</option>
+                        <option value="Sale" selected="@(ViewBag.CurrentTransactionType == "Sale")">For Sale</option>
+                        <option value="Rent" selected="@(ViewBag.CurrentTransactionType == "Rent")">For Rent</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select name="propertyType" class="form-select">
+                        <option value="">All Properties</option>
+                        <option value="Apartment" selected="@(ViewBag.CurrentPropertyType == "Apartment")">Apartment</option>
+                        <option value="House" selected="@(ViewBag.CurrentPropertyType == "House")">House</option>
+                        <option value="Villa" selected="@(ViewBag.CurrentPropertyType == "Villa")">Villa</option>
+                        <option value="Land" selected="@(ViewBag.CurrentPropertyType == "Land")">Land</option>
+                        <option value="Commercial" selected="@(ViewBag.CurrentPropertyType == "Commercial")">Commercial</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select name="sortBy" class="form-select" id="sortBySelect">
+                        <option value="CreatedAt" selected="@(ViewBag.CurrentSortBy == "CreatedAt" || ViewBag.CurrentSortBy == null)">Date Created</option>
+                        <option value="UpdatedAt" selected="@(ViewBag.CurrentSortBy == "UpdatedAt")">Date Updated</option>
+                        <option value="Price" selected="@(ViewBag.CurrentSortBy == "Price")">Price</option>
+                        <option value="Title" selected="@(ViewBag.CurrentSortBy == "Title")">Title</option>
+                        <option value="Status" selected="@(ViewBag.CurrentSortBy == "Status")">Status</option>
+                    </select>
+                    <input type="hidden" name="sortOrder" id="sortOrderInput" value="@(ViewBag.CurrentSortOrder ?? "desc")" />
                 </div>
             </div>
-            <div class="col-md-2">
-                <select class="form-select">
-                    <option value="">All Status</option>
-                    <option value="Published">Published</option>
-                    <option value="Draft">Draft</option>
-                    <option value="PendingReview">Pending Review</option>
-                </select>
+            <div class="row g-3 mt-2">
+                <div class="col-md-3">
+                    <input type="number" name="minPrice" class="form-control" placeholder="Min Price" 
+                           value="@ViewBag.CurrentMinPrice" step="1000000">
+                </div>
+                <div class="col-md-3">
+                    <input type="number" name="maxPrice" class="form-control" placeholder="Max Price" 
+                           value="@ViewBag.CurrentMaxPrice" step="1000000">
+                </div>
+                <div class="col-md-2">
+                    <input type="number" name="pageSize" class="form-control" placeholder="Per Page" 
+                           value="@Model.PageSize" min="5" max="50">
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-funnel me-2"></i>Apply Filters
+                    </button>
+                </div>
+                <div class="col-md-2">
+                    <a asp-controller="Lister" asp-action="Listings" class="btn btn-outline-secondary w-100">
+                        <i class="bi bi-x-circle me-2"></i>Reset
+                    </a>
+                </div>
             </div>
-            <div class="col-md-2">
-                <select class="form-select">
-                    <option value="">All Types</option>
-                    <option value="Sale">For Sale</option>
-                    <option value="Rent">For Rent</option>
-                </select>
-            </div>
-            <div class="col-md-2">
-                <select class="form-select">
-                    <option value="">Sort By</option>
-                    <option value="newest">Newest First</option>
-                    <option value="oldest">Oldest First</option>
-                    <option value="price-high">Price: High to Low</option>
-                    <option value="price-low">Price: Low to High</option>
-                </select>
-            </div>
-            <div class="col-md-2">
-                <button class="btn btn-outline-secondary w-100">
-                    <i class="bi bi-funnel me-2"></i>More Filters
-                </button>
-            </div>
-        </div>
+        </form>
     </div>
 
     <!-- Statistics Summary -->
     <div class="row g-3 mb-4">
         <div class="col-md-3">
             <div class="mini-stat-card">
-                <div class="stat-value">@Model.Count</div>
+                <div class="stat-value">@Model.TotalCount</div>
                 <div class="stat-label">Total</div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="mini-stat-card">
-                <div class="stat-value">@Model.Count(l => l.Status == "Published")</div>
+                <div class="stat-value">@Model.Items.Count(l => l.Status == "Published")</div>
                 <div class="stat-label">Published</div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="mini-stat-card">
-                <div class="stat-value">@Model.Count(l => l.Status == "Draft")</div>
+                <div class="stat-value">@Model.Items.Count(l => l.Status == "Draft")</div>
                 <div class="stat-label">Drafts</div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="mini-stat-card">
-                <div class="stat-value">@Model.Count(l => l.Status == "PendingReview")</div>
+                <div class="stat-value">@Model.Items.Count(l => l.Status == "PendingReview")</div>
                 <div class="stat-label">Pending</div>
             </div>
         </div>
     </div>
 
-    @if (Model == null || Model.Count == 0)
+    @if (Model == null || Model.Items.Count == 0)
     {
         <div class="alert alert-info">
             <i class="bi bi-info-circle me-2"></i>You have not created any listings yet. 
@@ -125,21 +160,58 @@
     {
         <!-- Listings Table -->
         <div class="listings-table-card">
+        <form asp-controller="Lister" asp-action="Listings" method="get" id="sortForm">
+            <input type="hidden" name="searchTerm" value="@ViewBag.CurrentSearch" />
+            <input type="hidden" name="status" value="@ViewBag.CurrentStatus" />
+            <input type="hidden" name="transactionType" value="@ViewBag.CurrentTransactionType" />
+            <input type="hidden" name="propertyType" value="@ViewBag.CurrentPropertyType" />
+            <input type="hidden" name="city" value="@ViewBag.CurrentCity" />
+            <input type="hidden" name="district" value="@ViewBag.CurrentDistrict" />
+            <input type="hidden" name="minPrice" value="@ViewBag.CurrentMinPrice" />
+            <input type="hidden" name="maxPrice" value="@ViewBag.CurrentMaxPrice" />
+            <input type="hidden" name="sortBy" id="sortByHidden" value="@(ViewBag.CurrentSortBy ?? "CreatedAt")" />
+            <input type="hidden" name="sortOrder" id="sortOrderHidden" value="@(ViewBag.CurrentSortOrder ?? "desc")" />
+            <input type="hidden" name="pageSize" value="@Model.PageSize" />
+            <input type="hidden" name="pageNumber" id="pageNumberHidden" value="@Model.PageNumber" />
         <div class="table-responsive">
             <table class="table table-hover listings-table">
                 <thead>
                     <tr>
-                        <th>Property</th>
+                        <th data-sort="Title">
+                            Property 
+                            @if (ViewBag.CurrentSortBy == "Title")
+                            {
+                                <i class="bi bi-@(ViewBag.CurrentSortOrder == "asc" ? "sort-up" : "sort-down")"></i>
+                            }
+                        </th>
                         <th>Type</th>
-                        <th>Price</th>
+                        <th data-sort="Price">
+                            Price 
+                            @if (ViewBag.CurrentSortBy == "Price")
+                            {
+                                <i class="bi bi-@(ViewBag.CurrentSortOrder == "asc" ? "sort-up" : "sort-down")"></i>
+                            }
+                        </th>
                         <th>Location</th>
-                        <th>Status</th>
-                        <th>Created</th>
+                        <th data-sort="Status">
+                            Status 
+                            @if (ViewBag.CurrentSortBy == "Status")
+                            {
+                                <i class="bi bi-@(ViewBag.CurrentSortOrder == "asc" ? "sort-up" : "sort-down")"></i>
+                            }
+                        </th>
+                        <th data-sort="CreatedAt">
+                            Created 
+                            @if (ViewBag.CurrentSortBy == "CreatedAt" || ViewBag.CurrentSortBy == null)
+                            {
+                                <i class="bi bi-@(ViewBag.CurrentSortOrder == "asc" ? "sort-up" : "sort-down")"></i>
+                            }
+                        </th>
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var listing in Model)
+                    @foreach (var listing in Model.Items)
                     {
                         <tr>
                             <td>
@@ -217,25 +289,139 @@
                 </tbody>
             </table>
         </div>
+        </form>
 
         <!-- Pagination -->
         <div class="table-footer">
             <div class="pagination-info">
-                Showing 1 to @Model.Count of @Model.Count entries
+                @if (Model.TotalCount > 0)
+                {
+                    <text>Showing @Model.StartIndex to @Model.EndIndex of @Model.TotalCount entries</text>
+                }
+                else
+                {
+                    <text>No entries found</text>
+                }
             </div>
-            <nav>
-                <ul class="pagination mb-0">
-                    <li class="page-item disabled">
-                        <a class="page-link" href="#" tabindex="-1">Previous</a>
-                    </li>
-                    <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                    <li class="page-item"><a class="page-link" href="#">2</a></li>
-                    <li class="page-item"><a class="page-link" href="#">3</a></li>
-                    <li class="page-item">
-                        <a class="page-link" href="#">Next</a>
-                    </li>
-                </ul>
-            </nav>
+            @if (Model.TotalPages > 1)
+            {
+                <nav>
+                    <ul class="pagination mb-0">
+                        <li class="page-item @(!Model.HasPrevious ? "disabled" : "")">
+                            <a class="page-link" 
+                               href="@Url.Action("Listings", new { 
+                                   searchTerm = ViewBag.CurrentSearch, 
+                                   status = ViewBag.CurrentStatus, 
+                                   transactionType = ViewBag.CurrentTransactionType,
+                                   propertyType = ViewBag.CurrentPropertyType,
+                                   city = ViewBag.CurrentCity,
+                                   district = ViewBag.CurrentDistrict,
+                                   minPrice = ViewBag.CurrentMinPrice,
+                                   maxPrice = ViewBag.CurrentMaxPrice,
+                                   sortBy = ViewBag.CurrentSortBy,
+                                   sortOrder = ViewBag.CurrentSortOrder,
+                                   pageNumber = Model.PageNumber - 1, 
+                                   pageSize = Model.PageSize 
+                               })"
+                               tabindex="-1">Previous</a>
+                        </li>
+
+                        @{
+                            int startPage = Math.Max(1, Model.PageNumber - 2);
+                            int endPage = Math.Min(Model.TotalPages, Model.PageNumber + 2);
+                            
+                            if (startPage > 1)
+                            {
+                                <li class="page-item">
+                                    <a class="page-link" 
+                                       href="@Url.Action("Listings", new { 
+                                           searchTerm = ViewBag.CurrentSearch, 
+                                           status = ViewBag.CurrentStatus, 
+                                           transactionType = ViewBag.CurrentTransactionType,
+                                           propertyType = ViewBag.CurrentPropertyType,
+                                           city = ViewBag.CurrentCity,
+                                           district = ViewBag.CurrentDistrict,
+                                           minPrice = ViewBag.CurrentMinPrice,
+                                           maxPrice = ViewBag.CurrentMaxPrice,
+                                           sortBy = ViewBag.CurrentSortBy,
+                                           sortOrder = ViewBag.CurrentSortOrder,
+                                           pageNumber = 1, 
+                                           pageSize = Model.PageSize 
+                                       })">1</a>
+                                </li>
+                                if (startPage > 2)
+                                {
+                                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                                }
+                            }
+
+                            for (int i = startPage; i <= endPage; i++)
+                            {
+                                <li class="page-item @(i == Model.PageNumber ? "active" : "")">
+                                    <a class="page-link" 
+                                       href="@Url.Action("Listings", new { 
+                                           searchTerm = ViewBag.CurrentSearch, 
+                                           status = ViewBag.CurrentStatus, 
+                                           transactionType = ViewBag.CurrentTransactionType,
+                                           propertyType = ViewBag.CurrentPropertyType,
+                                           city = ViewBag.CurrentCity,
+                                           district = ViewBag.CurrentDistrict,
+                                           minPrice = ViewBag.CurrentMinPrice,
+                                           maxPrice = ViewBag.CurrentMaxPrice,
+                                           sortBy = ViewBag.CurrentSortBy,
+                                           sortOrder = ViewBag.CurrentSortOrder,
+                                           pageNumber = i, 
+                                           pageSize = Model.PageSize 
+                                       })">@i</a>
+                                </li>
+                            }
+
+                            if (endPage < Model.TotalPages)
+                            {
+                                if (endPage < Model.TotalPages - 1)
+                                {
+                                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                                }
+                                <li class="page-item">
+                                    <a class="page-link" 
+                                       href="@Url.Action("Listings", new { 
+                                           searchTerm = ViewBag.CurrentSearch, 
+                                           status = ViewBag.CurrentStatus, 
+                                           transactionType = ViewBag.CurrentTransactionType,
+                                           propertyType = ViewBag.CurrentPropertyType,
+                                           city = ViewBag.CurrentCity,
+                                           district = ViewBag.CurrentDistrict,
+                                           minPrice = ViewBag.CurrentMinPrice,
+                                           maxPrice = ViewBag.CurrentMaxPrice,
+                                           sortBy = ViewBag.CurrentSortBy,
+                                           sortOrder = ViewBag.CurrentSortOrder,
+                                           pageNumber = Model.TotalPages, 
+                                           pageSize = Model.PageSize 
+                                       })">@Model.TotalPages</a>
+                                </li>
+                            }
+                        }
+
+                        <li class="page-item @(!Model.HasNext ? "disabled" : "")">
+                            <a class="page-link" 
+                               href="@Url.Action("Listings", new { 
+                                   searchTerm = ViewBag.CurrentSearch, 
+                                   status = ViewBag.CurrentStatus, 
+                                   transactionType = ViewBag.CurrentTransactionType,
+                                   propertyType = ViewBag.CurrentPropertyType,
+                                   city = ViewBag.CurrentCity,
+                                   district = ViewBag.CurrentDistrict,
+                                   minPrice = ViewBag.CurrentMinPrice,
+                                   maxPrice = ViewBag.CurrentMaxPrice,
+                                   sortBy = ViewBag.CurrentSortBy,
+                                   sortOrder = ViewBag.CurrentSortOrder,
+                                   pageNumber = Model.PageNumber + 1, 
+                                   pageSize = Model.PageSize 
+                               })">Next</a>
+                        </li>
+                    </ul>
+                </nav>
+            }
         </div>
     </div>
     }
@@ -284,6 +470,31 @@
             
             document.getElementById('listingIdToDelete').value = listingId;
             document.getElementById('listingTitleToDelete').textContent = listingTitle;
+        });
+
+        // Handle table header sorting
+        document.querySelectorAll('th[data-sort]').forEach(header => {
+            header.style.cursor = 'pointer';
+            header.addEventListener('click', function() {
+                const sortField = this.getAttribute('data-sort');
+                const sortByHidden = document.getElementById('sortByHidden');
+                const sortOrderHidden = document.getElementById('sortOrderHidden');
+                const sortForm = document.getElementById('sortForm');
+                
+                // Toggle order if clicking same field, otherwise default to desc
+                if (sortByHidden.value === sortField) {
+                    sortOrderHidden.value = sortOrderHidden.value === 'desc' ? 'asc' : 'desc';
+                } else {
+                    sortByHidden.value = sortField;
+                    sortOrderHidden.value = 'desc';
+                }
+                
+                // Reset to page 1 when sorting changes
+                document.getElementById('pageNumberHidden').value = '1';
+                
+                // Submit the form
+                sortForm.submit();
+            });
         });
     </script>
 }
@@ -349,6 +560,21 @@
         color: #2c3e50;
         padding: 1rem;
         white-space: nowrap;
+    }
+
+    .listings-table thead th[data-sort] {
+        cursor: pointer;
+        user-select: none;
+        transition: background-color 0.2s ease;
+    }
+
+    .listings-table thead th[data-sort]:hover {
+        background-color: #e9ecef;
+    }
+
+    .listings-table thead th i {
+        font-size: 0.8rem;
+        margin-left: 0.25rem;
     }
 
     .listings-table tbody td {

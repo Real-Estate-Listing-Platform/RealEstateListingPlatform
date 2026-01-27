@@ -43,10 +43,39 @@ namespace RealEstateListingPlatform.Controllers
         }
 
         // Listings Management
-        public async Task<IActionResult> Listings()
+        public async Task<IActionResult> Listings(
+            string? searchTerm,
+            string? status,
+            string? transactionType,
+            string? propertyType,
+            string? city,
+            string? district,
+            decimal? minPrice,
+            decimal? maxPrice,
+            string sortBy = "CreatedAt",
+            string sortOrder = "desc",
+            int pageNumber = 1,
+            int pageSize = 10)
         {
             var userId = GetCurrentUserId();
-            var result = await _listingService.GetMyListingsAsync(userId);
+
+            var filterParams = new BLL.DTOs.ListingFilterParameters
+            {
+                SearchTerm = searchTerm,
+                Status = status,
+                TransactionType = transactionType,
+                PropertyType = propertyType,
+                City = city,
+                District = district,
+                MinPrice = minPrice,
+                MaxPrice = maxPrice,
+                SortBy = sortBy,
+                SortOrder = sortOrder,
+                PageNumber = pageNumber,
+                PageSize = pageSize
+            };
+
+            var result = await _listingService.GetMyListingsFilteredAsync(userId, filterParams);
             
             if (TempData["Success"] != null)
             {
@@ -61,7 +90,19 @@ namespace RealEstateListingPlatform.Controllers
                 ViewBag.WarningMessage = TempData["Warning"];
             }
 
-            return View(result.Data ?? new List<Listing>());
+            // Pass filter parameters to view for maintaining state
+            ViewBag.CurrentSearch = searchTerm;
+            ViewBag.CurrentStatus = status;
+            ViewBag.CurrentTransactionType = transactionType;
+            ViewBag.CurrentPropertyType = propertyType;
+            ViewBag.CurrentCity = city;
+            ViewBag.CurrentDistrict = district;
+            ViewBag.CurrentMinPrice = minPrice;
+            ViewBag.CurrentMaxPrice = maxPrice;
+            ViewBag.CurrentSortBy = sortBy;
+            ViewBag.CurrentSortOrder = sortOrder;
+
+            return View(result.Data ?? new BLL.DTOs.PaginatedResult<Listing>());
         }
 
         // GET: Lister/Details/5

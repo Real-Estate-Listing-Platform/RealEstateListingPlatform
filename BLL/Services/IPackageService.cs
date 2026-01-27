@@ -17,6 +17,7 @@ public interface IPackageService
     // User package operations
     Task<ServiceResult<List<UserPackageDto>>> GetUserPackagesAsync(Guid userId);
     Task<ServiceResult<List<UserPackageDto>>> GetActiveUserPackagesAsync(Guid userId);
+    Task<ServiceResult<PaginatedResult<UserPackageDto>>> GetUserPackagesFilteredAsync(Guid userId, PackageFilterParameters parameters);
     Task<ServiceResult<UserPackageDto>> GetUserPackageByIdAsync(Guid id);
     Task<ServiceResult<UserPackageDto>> PurchasePackageAsync(Guid userId, PurchasePackageDto dto);
     Task<ServiceResult<bool>> ActivateUserPackageAsync(Guid transactionId);

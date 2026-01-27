@@ -51,19 +51,51 @@ namespace RealEstateListingPlatform.Controllers
 
         // GET: Package/MyPackages - User's purchased packages
         [HttpGet]
-        public async Task<IActionResult> MyPackages()
+        public async Task<IActionResult> MyPackages(
+            string? searchTerm,
+            string? status,
+            string? packageType,
+            DateTime? purchasedAfter,
+            DateTime? purchasedBefore,
+            string sortBy = "PurchasedAt",
+            string sortOrder = "desc",
+            int pageNumber = 1,
+            int pageSize = 10)
         {
             var userId = GetCurrentUserId();
-            var result = await _packageService.GetUserPackagesAsync(userId);
+
+            var filterParams = new PackageFilterParameters
+            {
+                SearchTerm = searchTerm,
+                Status = status,
+                PackageType = packageType,
+                PurchasedAfter = purchasedAfter,
+                PurchasedBefore = purchasedBefore,
+                SortBy = sortBy,
+                SortOrder = sortOrder,
+                PageNumber = pageNumber,
+                PageSize = pageSize
+            };
+
+            var result = await _packageService.GetUserPackagesFilteredAsync(userId, filterParams);
 
             if (!result.Success)
             {
                 TempData["Error"] = result.Message;
-                return View(new List<UserPackageDto>());
+                return View(new PaginatedResult<UserPackageDto>());
             }
 
             var activeResult = await _packageService.GetActiveUserPackagesAsync(userId);
             ViewBag.ActivePackages = activeResult.Data ?? new List<UserPackageDto>();
+
+            // Pass filter parameters to view for maintaining state
+            ViewBag.CurrentSearch = searchTerm;
+            ViewBag.CurrentStatus = status;
+            ViewBag.CurrentPackageType = packageType;
+            ViewBag.CurrentPurchasedAfter = purchasedAfter;
+            ViewBag.CurrentPurchasedBefore = purchasedBefore;
+            ViewBag.CurrentSortBy = sortBy;
+            ViewBag.CurrentSortOrder = sortOrder;
 
             return View(result.Data);
         }
