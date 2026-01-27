@@ -65,7 +65,7 @@ public partial class Listing
 
     public virtual User Lister { get; set; } = null!;
 
-    public virtual ICollection<ListingMedium> ListingMedia { get; set; } = new List<ListingMedium>();
+    public virtual ICollection<ListingMedia> ListingMedia { get; set; } = new List<ListingMedia>();
 
     public virtual ICollection<ListingPriceHistory> ListingPriceHistories { get; set; } = new List<ListingPriceHistory>();
 
