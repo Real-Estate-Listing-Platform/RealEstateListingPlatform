@@ -1,3 +1,4 @@
+using BLL.DTOs;
 using BLL.Services;
 using DAL.Models;
 using DAL.Repositories;
@@ -15,9 +16,25 @@ namespace BLL.Services.Implementation
             _userRepository = userRepository;
         }
 
-        public async Task<List<User>> GetUsers()
+        public async Task<List<UserDto>> GetUsers()
         {
-            return await _userRepository.GetUsers();
+            var users = await _userRepository.GetUsers();
+            return users.Select(u => new UserDto
+            {
+                Id = u.Id,
+                DisplayName = u.DisplayName,
+                Role = u.Role,
+                Email = u.Email,
+                Phone = u.Phone,
+                Address = u.Address,
+                AvatarUrl = u.AvatarUrl,
+                Bio = u.Bio,
+                IsEmailVerified = u.IsEmailVerified,
+                IsActive = u.IsActive,
+                LastLoginAt = u.LastLoginAt,
+                CreatedAt = u.CreatedAt,
+                UpdatedAt = u.UpdatedAt
+            }).ToList();
         }
 
         public async Task<User?> Login(string email, string password)

@@ -1,4 +1,4 @@
-﻿@model IEnumerable<DAL.Models.User>
+@model IEnumerable<BLL.DTOs.UserDto>
 
 @{
     ViewData["Title"] = "Index";
@@ -26,9 +26,6 @@
             </th>
             <th>
                 @Html.DisplayNameFor(model => model.Address)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.PasswordHash)
             </th>
             <th>
                 @Html.DisplayNameFor(model => model.AvatarUrl)
@@ -71,9 +68,6 @@
             </td>
             <td>
                 @Html.DisplayFor(modelItem => item.Address)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.PasswordHash)
             </td>
             <td>
                 @Html.DisplayFor(modelItem => item.AvatarUrl)

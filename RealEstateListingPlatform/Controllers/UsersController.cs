@@ -1,5 +1,5 @@
+using BLL.DTOs;
 using BLL.Services;
-using DAL.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace RealEstateListingPlatform.Controllers
