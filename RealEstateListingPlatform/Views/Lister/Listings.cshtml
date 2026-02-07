@@ -1,4 +1,5 @@
-@model BLL.DTOs.PaginatedResult<DAL.Models.Listing>
+@model BLL.DTOs.PaginatedResult<BLL.DTOs.ListingDto>
+@using BLL.DTOs
 
 @{
     ViewData["Title"] = "Listings";
@@ -69,7 +70,7 @@
                 <div class="col-md-2">
                     <select name="transactionType" class="form-select">
                         <option value="">All Types</option>
-                        <option value="Sale" selected="@(ViewBag.CurrentTransactionType == "Sale")">For Sale</option>
+                        <option value="Sell" selected="@(ViewBag.CurrentTransactionType == "Sell")">For Sale</option>
                         <option value="Rent" selected="@(ViewBag.CurrentTransactionType == "Rent")">For Rent</option>
                     </select>
                 </div>
@@ -193,6 +194,7 @@
                             }
                         </th>
                         <th>Location</th>
+                        <th>Boost</th>
                         <th data-sort="Status">
                             Status 
                             @if (ViewBag.CurrentSortBy == "Status")
@@ -226,7 +228,7 @@
                                 </div>
                             </td>
                             <td>
-                                @if (listing.TransactionType == "Sale")
+                                @if (listing.TransactionType == "Sell")
                                 {
                                     <span class="badge bg-primary">For Sale</span>
                                 }
@@ -258,6 +260,29 @@
                                         <span>No location</span>
                                     }
                                 </small>
+                            </td>
+                            <td class="text-center">
+                                @if (listing.IsBoosted)
+                                {
+                                    <span class="badge bg-warning text-dark" title="Boosted">
+                                        <i class="bi bi-rocket-fill"></i> Boosted
+                                    </span>
+                                }
+                                else if (listing.Status == "Published")
+                                {
+                                    <button type="button" class="btn btn-sm btn-outline-warning" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#boostModal-@listing.Id" 
+                                            title="Boost this listing">
+                                        <i class="bi bi-rocket"></i>
+                                    </button>
+                                }
+                                else
+                                {
+                                    <span class="text-muted small" title="Only published listings can be boosted">
+                                        <i class="bi bi-dash-circle"></i>
+                                    </span>
+                                }
                             </td>
                             <td>
                                 <partial name="_StatusBadge" model="@(listing.Status ?? "Draft")" />
@@ -687,3 +712,81 @@
         }
     }
 </style>
+
+@* Boost Listing Modal - Only for Published Listings *@
+@foreach (var listing in Model.Items.Where(l => l.Status == "Published"))
+{
+    <div class="modal fade" id="boostModal-@listing.Id" tabindex="-1" aria-labelledby="boostModalLabel-@listing.Id" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold" id="boostModalLabel-@listing.Id">
+                        <i class="bi bi-rocket-fill text-warning me-2"></i>Boost Listing
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form asp-controller="Lister" asp-action="BoostListing" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="listingId" value="@listing.Id" />
+                    <div class="modal-body p-4">
+                        <div class="mb-3">
+                            <h6 class="fw-bold">@listing.Title</h6>
+                            <p class="text-muted small mb-3">
+                                <i class="bi bi-geo-alt"></i> 
+                                @if (!string.IsNullOrEmpty(listing.District) && !string.IsNullOrEmpty(listing.City))
+                                {
+                                    <text>@listing.District, @listing.City</text>
+                                }
+                            </p>
+                        </div>
+
+                        @if (ViewBag.BoostPackages != null && ((List<UserPackageDto>)ViewBag.BoostPackages).Any())
+                        {
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Select Boost Package</label>
+                                <select name="userPackageId" class="form-select" required>
+                                    <option value="">Choose a package...</option>
+                                    @foreach (var package in (List<UserPackageDto>)ViewBag.BoostPackages)
+                                    {
+                                        <option value="@package.Id">
+                                            @package.Package.Name - @package.Package.BoostDays days
+                                            @if (package.ExpiresAt.HasValue)
+                                            {
+                                                <text>(Expires: @package.ExpiresAt.Value.ToString("MMM dd, yyyy"))</text>
+                                            }
+                                        </option>
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="alert alert-info small mb-0">
+                                <i class="bi bi-info-circle me-1"></i>
+                                <strong>How it works:</strong> Your listing will appear at the top of search results for the selected boost duration.
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="alert alert-warning mb-0">
+                                <i class="bi bi-exclamation-triangle me-2"></i>
+                                <p class="mb-2">You don't have any active boost packages.</p>
+                                <a href="@Url.Action("Index", "Package", new { type = "BOOST_LISTING" })" class="btn btn-sm btn-warning">
+                                    <i class="bi bi-cart me-1"></i>Purchase Boost Package
+                                </a>
+                            </div>
+                        }
+                    </div>
+                    <div class="modal-footer border-0 pt-0">
+                        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                        @if (ViewBag.BoostPackages != null && ((List<UserPackageDto>)ViewBag.BoostPackages).Any())
+                        {
+                            <button type="submit" class="btn btn-warning rounded-pill px-4">
+                                <i class="bi bi-rocket-fill me-1"></i>Boost Now
+                            </button>
+                        }
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+}
+

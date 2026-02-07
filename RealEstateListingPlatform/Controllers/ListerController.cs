@@ -6,7 +6,6 @@ using System.Linq;
 using System.Security.Claims;
 using BLL.DTOs;
 using BLL.Services;
-using DAL.Models;
 
 namespace RealEstateListingPlatform.Controllers
 {
@@ -14,32 +13,55 @@ namespace RealEstateListingPlatform.Controllers
     public class ListerController : Controller
     {
         private readonly IListingService _listingService;
+        private readonly IPackageService _packageService;
+        private readonly ILeadService _leadService;
 
-        public ListerController(IListingService listingService)
+        public ListerController(IListingService listingService, IPackageService packageService, ILeadService leadService)
         {
             _listingService = listingService;
+            _packageService = packageService;
+            _leadService = leadService;
         }
 
         // Dashboard
         public async Task<IActionResult> Dashboard()
         {
             var userId = GetCurrentUserId();
-            var result = await _listingService.GetMyListingsAsync(userId);
-            var listings = result.Data ?? new List<Listing>();
-
-            var stats = new
+            
+            // Fetch comprehensive dashboard statistics
+            var statsResult = await _leadService.GetDashboardStatsAsync(userId);
+            
+            if (!statsResult.Success || statsResult.Data == null)
             {
-                TotalListings = listings.Count,
-                ActiveListings = listings.Count(l => l.Status == "Published"),
-                PendingReview = listings.Count(l => l.Status == "PendingReview"),
-                TotalLeads = 47,
-                NewLeads = 12,
-                TotalRevenue = 125000000,
-                ThisMonthRevenue = 35000000
-            };
+                // Fallback to basic stats if service fails
+                var result = await _listingService.GetMyListingsAsync(userId);
+                var listings = result.Data ?? new List<ListingDto>();
 
-            ViewBag.Stats = stats;
-            return View();
+                var basicStats = new DashboardStatsDto
+                {
+                    TotalListings = listings.Count,
+                    ActiveListings = listings.Count(l => l.Status == "Published"),
+                    PendingReview = listings.Count(l => l.Status == "PendingReview"),
+                    DraftListings = listings.Count(l => l.Status == "Draft"),
+                    ExpiredListings = listings.Count(l => l.Status == "Expired"),
+                    RejectedListings = listings.Count(l => l.Status == "Rejected"),
+                    TotalLeads = 0,
+                    NewLeads = 0,
+                    ContactedLeads = 0,
+                    ClosedLeads = 0,
+                    ConversionRate = 0.0,
+                    TotalViews = 0,
+                    AverageViewsPerListing = 0.0,
+                    BoostedListings = listings.Count(l => l.IsBoosted),
+                    ExpiringListingsSoon = 0,
+                    PublishSuccessRate = 0.0,
+                    LastLeadReceivedAt = null
+                };
+
+                return View(basicStats);
+            }
+
+            return View(statsResult.Data);
         }
 
         // Listings Management
@@ -102,7 +124,14 @@ namespace RealEstateListingPlatform.Controllers
             ViewBag.CurrentSortBy = sortBy;
             ViewBag.CurrentSortOrder = sortOrder;
 
-            return View(result.Data ?? new BLL.DTOs.PaginatedResult<Listing>());
+            // Get active boost packages for the user
+            var activePackagesResult = await _packageService.GetActiveUserPackagesAsync(userId);
+            var boostPackages = activePackagesResult.Success && activePackagesResult.Data != null
+                ? activePackagesResult.Data.Where(p => p.Package.PackageType == "BOOST_LISTING" && p.Status == "Active").ToList()
+                : new List<UserPackageDto>();
+            ViewBag.BoostPackages = boostPackages;
+
+            return View(result.Data ?? new BLL.DTOs.PaginatedResult<ListingDto>());
         }
 
         // GET: Lister/Details/5
@@ -123,6 +152,13 @@ namespace RealEstateListingPlatform.Controllers
             {
                 TempData["Error"] = "Listing not found.";
                 return RedirectToAction("Listings");
+            }
+
+            // Get view statistics
+            var viewStatsResult = await _listingService.GetListingViewStatsAsync(id, 30);
+            if (viewStatsResult.Success && viewStatsResult.Data != null)
+            {
+                ViewBag.ViewStats = viewStatsResult.Data;
             }
 
             return View(result.Data);
@@ -152,6 +188,17 @@ namespace RealEstateListingPlatform.Controllers
                 TempData["Error"] = "Listing not found.";
                 return RedirectToAction("Listings");
             }
+
+            // Load available packages for this user
+            var activePackagesResult = await _packageService.GetActiveUserPackagesAsync(userId);
+            var availablePackages = activePackagesResult.Success && activePackagesResult.Data != null
+                ? activePackagesResult.Data
+                    .Where(p => p.Status == "Active" && 
+                           (p.Package.PackageType == "PHOTO_PACK" || p.Package.PackageType == "VIDEO_UPLOAD"))
+                    .ToList()
+                : new List<BLL.DTOs.UserPackageDto>();
+            
+            ViewBag.AvailablePackages = availablePackages;
 
             PopulateDropDowns();
             return View(MapToEditViewModel(result.Data));
@@ -203,7 +250,7 @@ namespace RealEstateListingPlatform.Controllers
         // POST: Lister/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(Guid id, RealEstateListingPlatform.Models.ListingEditViewModel model, List<IFormFile>? mediaFiles)
+        public async Task<IActionResult> Edit(Guid id, RealEstateListingPlatform.Models.ListingEditViewModel model, List<IFormFile>? mediaFiles, Guid? photoPackageId, Guid? videoPackageId)
         {
             if (!ModelState.IsValid)
             {
@@ -224,7 +271,55 @@ namespace RealEstateListingPlatform.Controllers
                 return View(model);
             }
 
-            TempData["Success"] = "Listing updated successfully.";
+            // Apply packages if selected
+            var packageMessages = new List<string>();
+            
+            if (photoPackageId.HasValue && photoPackageId.Value != Guid.Empty)
+            {
+                var photoPackageDto = new BLL.DTOs.ApplyPackageDto
+                {
+                    ListingId = id,
+                    UserPackageId = photoPackageId.Value
+                };
+                
+                var photoResult = await _packageService.ApplyPackageToListingAsync(userId, photoPackageDto);
+                if (photoResult.Success)
+                {
+                    packageMessages.Add("Photo package applied successfully!");
+                }
+                else
+                {
+                    packageMessages.Add($"Photo package failed: {photoResult.Message}");
+                }
+            }
+            
+            if (videoPackageId.HasValue && videoPackageId.Value != Guid.Empty)
+            {
+                var videoPackageDto = new BLL.DTOs.ApplyPackageDto
+                {
+                    ListingId = id,
+                    UserPackageId = videoPackageId.Value
+                };
+                
+                var videoResult = await _packageService.ApplyPackageToListingAsync(userId, videoPackageDto);
+                if (videoResult.Success)
+                {
+                    packageMessages.Add("Video package applied successfully!");
+                }
+                else
+                {
+                    packageMessages.Add($"Video package failed: {videoResult.Message}");
+                }
+            }
+
+            // Build success message
+            var successMessage = "Listing updated successfully.";
+            if (packageMessages.Any())
+            {
+                successMessage += " " + string.Join(" ", packageMessages);
+            }
+
+            TempData["Success"] = successMessage;
             return RedirectToAction("Edit", new { id });
         }
 
@@ -299,8 +394,37 @@ namespace RealEstateListingPlatform.Controllers
         // Customers/Leads Management
         public IActionResult Customers()
         {
-            var customers = GetMockCustomers();
-            return View(customers);
+            // Lead data is loaded via AJAX from LeadsController API
+            return View();
+        }
+
+
+        // POST: Lister/BoostListing
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> BoostListing(Guid listingId, Guid? userPackageId, int boostDays = 7)
+        {
+            var userId = GetCurrentUserId();
+
+            var boostDto = new BoostListingDto
+            {
+                ListingId = listingId,
+                UserPackageId = userPackageId,
+                BoostDays = boostDays
+            };
+
+            var result = await _packageService.BoostListingAsync(userId, boostDto);
+
+            if (!result.Success)
+            {
+                TempData["Error"] = result.Message;
+            }
+            else
+            {
+                TempData["Success"] = "Listing boosted successfully! Your listing is now at the top.";
+            }
+
+            return RedirectToAction(nameof(Listings));
         }
 
         // Helper Methods
@@ -317,7 +441,7 @@ namespace RealEstateListingPlatform.Controllers
         {
             ViewData["TransactionTypes"] = new Microsoft.AspNetCore.Mvc.Rendering.SelectList(new[]
             {
-                new { Value = "Sale", Text = "For Sale" },
+                new { Value = "Sell", Text = "For Sale" },
                 new { Value = "Rent", Text = "For Rent" }
             }, "Value", "Text");
 
@@ -358,7 +482,7 @@ namespace RealEstateListingPlatform.Controllers
             }, "Value", "Text");
         }
 
-        private RealEstateListingPlatform.Models.ListingEditViewModel MapToEditViewModel(Listing listing)
+        private RealEstateListingPlatform.Models.ListingEditViewModel MapToEditViewModel(ListingDto listing)
         {
             return new RealEstateListingPlatform.Models.ListingEditViewModel
             {
@@ -385,7 +509,11 @@ namespace RealEstateListingPlatform.Controllers
                 Status = listing.Status,
                 CreatedAt = listing.CreatedAt,
                 UpdatedAt = listing.UpdatedAt,
-                ExistingMedia = listing.ListingMedia?.ToList() ?? new List<ListingMedia>()
+                ExistingMedia = listing.ListingMedia ?? new List<ListingMediaDto>(),
+                IsBoosted = listing.IsBoosted,
+                IsFreeListingorder = listing.IsFreeListingorder,
+                MaxPhotos = listing.MaxPhotos,
+                AllowVideo = listing.AllowVideo
             };
         }
 
@@ -450,83 +578,8 @@ namespace RealEstateListingPlatform.Controllers
             model.Status = listingResult.Data.Status;
             model.CreatedAt = listingResult.Data.CreatedAt;
             model.UpdatedAt = listingResult.Data.UpdatedAt;
-            model.ExistingMedia = listingResult.Data.ListingMedia?.ToList() ?? new List<ListingMedia>();
+            model.ExistingMedia = listingResult.Data.ListingMedia ?? new List<ListingMediaDto>();
         }
 
-        // Mock Data Methods (for Customers only)
-        private List<MockCustomer> GetMockCustomers()
-        {
-            return new List<MockCustomer>
-            {
-                new MockCustomer
-                {
-                    Id = Guid.NewGuid(),
-                    Name = "Nguyen Van A",
-                    Email = "nguyenvana@gmail.com",
-                    Phone = "0901234567",
-                    InterestedProperty = "Luxury Apartment Vinhomes Central Park",
-                    Status = "New",
-                    Message = "I'm interested in viewing this property. When can we schedule a visit?",
-                    ContactedAt = DateTime.Now.AddHours(-2)
-                },
-                new MockCustomer
-                {
-                    Id = Guid.NewGuid(),
-                    Name = "Tran Thi B",
-                    Email = "tranthib@outlook.com",
-                    Phone = "0912345678",
-                    InterestedProperty = "Studio Apartment for Rent",
-                    Status = "Contacted",
-                    Message = "What is included in the rental price?",
-                    ContactedAt = DateTime.Now.AddDays(-1)
-                },
-                new MockCustomer
-                {
-                    Id = Guid.NewGuid(),
-                    Name = "Le Minh C",
-                    Email = "leminhc@yahoo.com",
-                    Phone = "0923456789",
-                    InterestedProperty = "Modern Villa Thu Duc",
-                    Status = "Contacted",
-                    Message = "Can you provide more photos of the interior?",
-                    ContactedAt = DateTime.Now.AddDays(-3)
-                },
-                new MockCustomer
-                {
-                    Id = Guid.NewGuid(),
-                    Name = "Pham Thi D",
-                    Email = "phamthid@gmail.com",
-                    Phone = "0934567890",
-                    InterestedProperty = "2BR Apartment Near BTS",
-                    Status = "Closed",
-                    Message = "Thank you, I've rented the apartment.",
-                    ContactedAt = DateTime.Now.AddDays(-7)
-                },
-                new MockCustomer
-                {
-                    Id = Guid.NewGuid(),
-                    Name = "Hoang Van E",
-                    Email = "hoangvane@fpt.edu.vn",
-                    Phone = "0945678901",
-                    InterestedProperty = "Luxury Apartment Vinhomes Central Park",
-                    Status = "New",
-                    Message = "Is the price negotiable?",
-                    ContactedAt = DateTime.Now.AddMinutes(-30)
-                }
-            };
-        }
-    }
-
-    // Mock Data Models (for Customers only)
-    public class MockCustomer
-    {
-        public Guid Id { get; set; }
-        public string Name { get; set; } = string.Empty;
-        public string Email { get; set; } = string.Empty;
-        public string Phone { get; set; } = string.Empty;
-        public string InterestedProperty { get; set; } = string.Empty;
-        public string Status { get; set; } = string.Empty;
-        public string Message { get; set; } = string.Empty;
-        public DateTime ContactedAt { get; set; }
     }
 }

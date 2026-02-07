@@ -61,5 +61,61 @@ namespace DAL.Repositories.Implementation
                 .Where(u => !u.IsEmailVerified && u.CreatedAt < threshold)
                 .ExecuteDeleteAsync(cancellationToken);
         }
+
+        // Statistics Methods for Admin Dashboard
+        public async Task<int> GetTotalUsersCountAsync()
+        {
+            return await _context.Users.CountAsync(u => u.Role != "Admin");
+        }
+
+        public async Task<int> GetNewUsersCountAsync(DateTime startDate)
+        {
+            return await _context.Users
+                .Where(u => u.CreatedAt >= startDate && u.Role != "Admin")
+                .CountAsync();
+        }
+
+        public async Task<int> GetActiveListersCountAsync()
+        {
+            return await _context.Users
+                .Where(u => u.Role == "Lister" && u.IsActive)
+                .CountAsync();
+        }
+
+        public async Task<int> GetActiveSeekersCountAsync()
+        {
+            return await _context.Users
+                .Where(u => u.Role == "Seeker" && u.IsActive)
+                .CountAsync();
+        }
+
+        public async Task<int> GetVerifiedUsersCountAsync()
+        {
+            return await _context.Users
+                .Where(u => u.IsEmailVerified && u.Role != "Admin")
+                .CountAsync();
+        }
+
+        public async Task<int> GetUnverifiedUsersCountAsync()
+        {
+            return await _context.Users
+                .Where(u => !u.IsEmailVerified && u.Role != "Admin")
+                .CountAsync();
+        }
+
+        public async Task<List<(DateTime Date, int Count)>> GetUserRegistrationsOverTimeAsync(int days)
+        {
+            var startDate = DateTime.UtcNow.AddDays(-days).Date;
+
+            var registrations = await _context.Users
+                .Where(u => u.CreatedAt >= startDate && u.Role != "Admin")
+                .GroupBy(u => u.CreatedAt.Date)
+                .Select(g => new { Date = g.Key, Count = g.Count() })
+                .OrderBy(x => x.Date)
+                .ToListAsync();
+
+            return registrations.Select(x => (x.Date, x.Count)).ToList();
+        }
     }
 }
+

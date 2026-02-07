@@ -24,11 +24,19 @@
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">                      
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Listings" asp-action="BrowseListings" asp-route-type="Sale">For Sale</a>
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Listings" asp-action="BrowseListings" asp-route-type="Sell">For Sale</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Listings" asp-action="BrowseListings" asp-route-type="Rent">For Rent</a>
                         </li>
+                        @if (User.Identity?.IsAuthenticated == true && User.IsInRole("Seeker"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-controller="Seeker" asp-action="InterestedListings">
+                                    My Interests
+                                </a>
+                            </li>
+                        }
                     </ul>
                     <partial name="_LoginPartial" />
                 </div>

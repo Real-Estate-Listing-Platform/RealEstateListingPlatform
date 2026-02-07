@@ -31,4 +31,17 @@ public interface IPackageRepository
     Task<ListingBoost> CreateBoostAsync(ListingBoost boost);
     Task UpdateBoostAsync(ListingBoost boost);
     Task ExpireOldBoostsAsync();
+
+    // Statistics Methods for Admin Dashboard
+    Task<PackageStatistics> GetPackageStatisticsAsync();
 }
+
+public class PackageStatistics
+{
+    public int TotalPurchased { get; set; }
+    public int BoostPackages { get; set; }
+    public int PhotoPacks { get; set; }
+    public int AdditionalListings { get; set; }
+    public decimal TotalRevenue { get; set; }
+}
+

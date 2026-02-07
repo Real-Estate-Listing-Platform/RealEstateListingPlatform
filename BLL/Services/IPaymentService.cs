@@ -21,4 +21,8 @@ public interface IPaymentService
     // Reporting
     Task<ServiceResult<decimal>> GetTotalRevenueAsync(DateTime? startDate = null, DateTime? endDate = null);
     Task<ServiceResult<Dictionary<string, int>>> GetTransactionStatisticsAsync();
+    
+    // PayOS specific operations
+    Task<ServiceResult<TransactionDto>> GetTransactionByPayOSOrderCodeAsync(long orderCode);
+    Task<ServiceResult<TransactionDto>> UpdateTransactionPayOSReferenceAsync(Guid transactionId, string payOSTransactionId);
 }

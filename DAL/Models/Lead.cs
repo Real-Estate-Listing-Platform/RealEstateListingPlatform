@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace DAL.Models;
 
@@ -23,9 +24,12 @@ public partial class Lead
 
     public DateTime? CreatedAt { get; set; }
 
+    [JsonIgnore]
     public virtual User Lister { get; set; } = null!;
 
+    [JsonIgnore]
     public virtual Listing Listing { get; set; } = null!;
 
+    [JsonIgnore]
     public virtual User Seeker { get; set; } = null!;
 }

@@ -44,36 +44,6 @@
         </div>
     }
 
-    <!-- Boost Listing Card -->
-    <div class="card mb-4 border-0 shadow-sm">
-        <div class="card-body">
-            <div class="row align-items-center">
-                <div class="col-md-8">
-                    <h6 class="mb-2">
-                        <i class="bi bi-rocket-fill text-warning me-2"></i>Boost This Listing
-                    </h6>
-                    <p class="text-muted small mb-0">
-                        Make your listing appear at the top of search results and get more visibility
-                    </p>
-                </div>
-                <div class="col-md-4 text-md-end mt-3 mt-md-0">
-                    @if (Model.IsBoosted)
-                    {
-                        <div class="alert alert-success mb-0 py-2">
-                            <i class="bi bi-check-circle me-1"></i> Currently Boosted
-                        </div>
-                    }
-                    else
-                    {
-                        <a href="@Url.Action("Index", "Package", new { type = "BOOST_LISTING" })" class="btn btn-warning">
-                            <i class="bi bi-rocket-fill me-2"></i>Boost Listing
-                        </a>
-                    }
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Package Management Card -->
     <div class="card mb-4 border-0 shadow-sm">
         <div class="card-header bg-gradient-primary text-white">
@@ -94,10 +64,11 @@
                         </div>
                         @if (Model.MaxPhotos <= 5)
                         {
-                            <a href="@Url.Action("Index", "Package", new { type = "PHOTO_PACK" })" 
-                               class="btn btn-sm btn-outline-primary mt-2 w-100">
+                            <button type="button" class="btn btn-sm btn-outline-primary mt-2 w-100"
+                                    data-bs-toggle="modal" data-bs-target="#applyPackageModal"
+                                    data-package-type="PHOTO_PACK">
                                 <i class="bi bi-arrow-up-circle"></i> Upgrade
-                            </a>
+                            </button>
                         }
                     </div>
                 </div>
@@ -123,7 +94,8 @@
                         @if (!Model.AllowVideo)
                         {
                             <button type="button" class="btn btn-sm btn-outline-success mt-2 w-100" 
-                                    data-bs-toggle="modal" data-bs-target="#applyVideoPackageModal">
+                                    data-bs-toggle="modal" data-bs-target="#applyPackageModal"
+                                    data-package-type="VIDEO_UPLOAD">
                                 <i class="bi bi-plus-circle"></i> Enable Video
                             </button>
                         }
@@ -155,6 +127,7 @@
             <div class="alert alert-info mt-3 mb-0">
                 <i class="bi bi-lightbulb"></i>
                 <strong>Tip:</strong> You can apply photo packs and video packages to this listing to enhance it. 
+                Boost packages can be applied from the <a href="@Url.Action("Listings", "Lister")" class="alert-link">Listings Management</a> page.
                 Packages can be purchased from the <a href="@Url.Action("Index", "Package")" class="alert-link">Package Marketplace</a>.
             </div>
         </div>
@@ -163,6 +136,8 @@
     <form asp-controller="Lister" asp-action="Edit" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data">
         <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
         <input type="hidden" asp-for="Id" />
+        <input type="hidden" id="selectedPhotoPackageId" name="photoPackageId" value="" />
+        <input type="hidden" id="selectedVideoPackageId" name="videoPackageId" value="" />
 
         <!-- Basic Information -->
         <div class="form-card mb-4">
@@ -433,6 +408,114 @@
     </div>
 </div>
 
+<!-- Apply Package Modal -->
+<div class="modal fade" id="applyPackageModal" tabindex="-1" aria-labelledby="applyPackageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="applyPackageModalLabel">
+                    <i class="bi bi-box-seam me-2"></i>Select Packages to Apply
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div>
+                <div class="modal-body">
+                    @{
+                        var availablePackages = ViewBag.AvailablePackages as List<BLL.DTOs.UserPackageDto> ?? new List<BLL.DTOs.UserPackageDto>();
+                        var photoPackages = availablePackages.Where(p => p.Package.PackageType == "PHOTO_PACK").ToList();
+                        var videoPackages = availablePackages.Where(p => p.Package.PackageType == "VIDEO_UPLOAD").ToList();
+                    }
+                    
+                    <div class="mb-3" id="modalInstructions">
+                        <p class="text-muted">Select packages to apply when you save changes:</p>
+                    </div>
+                    
+                    <div class="package-selection-container">
+                        @if (photoPackages.Any())
+                        {
+                            <div class="package-group mb-3" id="photoPackageGroup" style="display: none;">
+                                <h6 class="mb-2"><i class="bi bi-images text-primary"></i> Photo Packages</h6>
+                                @foreach (var package in photoPackages)
+                                {
+                                    <div class="form-check package-option">
+                                        <input class="form-check-input photo-package-radio" type="radio" name="photoPackageSelection" 
+                                               id="photoPackage_@package.Id" value="@package.Id">
+                                        <label class="form-check-label w-100" for="photoPackage_@package.Id">
+                                            <div class="d-flex justify-content-between align-items-start">
+                                                <div>
+                                                    <strong>@package.Package.Name</strong>
+                                                    <div class="small text-muted">@package.Package.Description</div>
+                                                    <div class="small">
+                                                        <span class="badge bg-info">+@package.Package.PhotoLimit photos</span>
+                                                        @if (package.ExpiresAt.HasValue)
+                                                        {
+                                                            <span class="badge bg-secondary">Expires: @package.ExpiresAt.Value.ToString("MMM dd, yyyy")</span>
+                                                        }
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                }
+                            </div>
+                        }
+
+                        @if (videoPackages.Any())
+                        {
+                            <div class="package-group mb-3" id="videoPackageGroup" style="display: none;">
+                                <h6 class="mb-2"><i class="bi bi-camera-video text-success"></i> Video Packages</h6>
+                                @foreach (var package in videoPackages)
+                                {
+                                    <div class="form-check package-option">
+                                        <input class="form-check-input video-package-radio" type="radio" name="videoPackageSelection" 
+                                               id="videoPackage_@package.Id" value="@package.Id">
+                                        <label class="form-check-label w-100" for="videoPackage_@package.Id">
+                                            <div class="d-flex justify-content-between align-items-start">
+                                                <div>
+                                                    <strong>@package.Package.Name</strong>
+                                                    <div class="small text-muted">@package.Package.Description</div>
+                                                    <div class="small">
+                                                        <span class="badge bg-success">Video Upload Enabled</span>
+                                                        @if (package.ExpiresAt.HasValue)
+                                                        {
+                                                            <span class="badge bg-secondary">Expires: @package.ExpiresAt.Value.ToString("MMM dd, yyyy")</span>
+                                                        }
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        
+                        <!-- No packages message (hidden by default, shown by JS if needed) -->
+                        <div class="alert alert-warning mb-0" id="noPackagesMessage" style="display: none;">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            <strong>No packages available</strong>
+                            <p class="mb-2" id="noPackagesText">You don't have any available packages of this type.</p>
+                            <a href="@Url.Action("Index", "Package")" class="btn btn-sm btn-primary">
+                                <i class="bi bi-cart-plus me-1"></i>Purchase Packages
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info mt-3 mb-0" id="packageInfoNote">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>Note:</strong> Selected packages will be applied when you click "Save Changes" on the edit form.
+                    </div>
+                </div>
+                <div class="modal-footer" id="modalFooter">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="confirmPackageSelection" data-bs-dismiss="modal">
+                        <i class="bi bi-check-circle me-2"></i>Confirm Selection
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
     <script>
@@ -505,6 +588,170 @@
                 }
             });
         });
+
+        // Handle Apply Package Modal
+        const applyPackageModal = document.getElementById('applyPackageModal');
+        if (applyPackageModal) {
+            // Load previously selected packages when modal opens
+            applyPackageModal.addEventListener('show.bs.modal', function (event) {
+                const button = event.relatedTarget;
+                const packageType = button?.getAttribute('data-package-type');
+                
+                // Get all elements
+                const photoGroup = document.getElementById('photoPackageGroup');
+                const videoGroup = document.getElementById('videoPackageGroup');
+                const noPackagesMessage = document.getElementById('noPackagesMessage');
+                const packageInfoNote = document.getElementById('packageInfoNote');
+                const confirmButton = document.getElementById('confirmPackageSelection');
+                const noPackagesText = document.getElementById('noPackagesText');
+                const modalInstructions = document.getElementById('modalInstructions');
+                
+                // Hide everything first
+                if (photoGroup) photoGroup.style.display = 'none';
+                if (videoGroup) videoGroup.style.display = 'none';
+                if (noPackagesMessage) noPackagesMessage.style.display = 'none';
+                if (packageInfoNote) packageInfoNote.style.display = 'none';
+                
+                // Determine which packages to show based on button clicked
+                if (packageType === 'PHOTO_PACK') {
+                    if (modalInstructions) modalInstructions.innerHTML = '<p class="text-muted">Select a photo package to upgrade your photo limit:</p>';
+                    
+                    if (photoGroup) {
+                        const hasPhotos = photoGroup.querySelectorAll('.photo-package-radio').length > 0;
+                        if (hasPhotos) {
+                            photoGroup.style.display = 'block';
+                            if (packageInfoNote) packageInfoNote.style.display = 'block';
+                            if (confirmButton) confirmButton.style.display = 'inline-block';
+                        } else {
+                            if (noPackagesMessage) {
+                                noPackagesMessage.style.display = 'block';
+                                if (noPackagesText) noPackagesText.textContent = "You don't have any available photo packages.";
+                            }
+                            if (confirmButton) confirmButton.style.display = 'none';
+                        }
+                    } else {
+                        if (noPackagesMessage) {
+                            noPackagesMessage.style.display = 'block';
+                            if (noPackagesText) noPackagesText.textContent = "You don't have any available photo packages.";
+                        }
+                        if (confirmButton) confirmButton.style.display = 'none';
+                    }
+                } else if (packageType === 'VIDEO_UPLOAD') {
+                    if (modalInstructions) modalInstructions.innerHTML = '<p class="text-muted">Select a video package to enable video uploads:</p>';
+                    
+                    if (videoGroup) {
+                        const hasVideos = videoGroup.querySelectorAll('.video-package-radio').length > 0;
+                        if (hasVideos) {
+                            videoGroup.style.display = 'block';
+                            if (packageInfoNote) packageInfoNote.style.display = 'block';
+                            if (confirmButton) confirmButton.style.display = 'inline-block';
+                        } else {
+                            if (noPackagesMessage) {
+                                noPackagesMessage.style.display = 'block';
+                                if (noPackagesText) noPackagesText.textContent = "You don't have any available video packages.";
+                            }
+                            if (confirmButton) confirmButton.style.display = 'none';
+                        }
+                    } else {
+                        if (noPackagesMessage) {
+                            noPackagesMessage.style.display = 'block';
+                            if (noPackagesText) noPackagesText.textContent = "You don't have any available video packages.";
+                        }
+                        if (confirmButton) confirmButton.style.display = 'none';
+                    }
+                } else {
+                    // Show all packages (fallback - shouldn't normally happen)
+                    if (photoGroup) photoGroup.style.display = 'block';
+                    if (videoGroup) videoGroup.style.display = 'block';
+                    if (packageInfoNote) packageInfoNote.style.display = 'block';
+                    if (confirmButton) confirmButton.style.display = 'inline-block';
+                }
+                
+                // Restore previous selections
+                const photoPackageId = document.getElementById('selectedPhotoPackageId').value;
+                const videoPackageId = document.getElementById('selectedVideoPackageId').value;
+                
+                if (photoPackageId && packageType === 'PHOTO_PACK') {
+                    const photoRadio = document.getElementById('photoPackage_' + photoPackageId);
+                    if (photoRadio) photoRadio.checked = true;
+                }
+                
+                if (videoPackageId && packageType === 'VIDEO_UPLOAD') {
+                    const videoRadio = document.getElementById('videoPackage_' + videoPackageId);
+                    if (videoRadio) videoRadio.checked = true;
+                }
+            });
+            
+            // Handle package selection confirmation
+            const confirmBtn = document.getElementById('confirmPackageSelection');
+            if (confirmBtn) {
+                confirmBtn.addEventListener('click', function() {
+                    // Get selected photo package
+                    const selectedPhotoRadio = document.querySelector('input[name="photoPackageSelection"]:checked');
+                    if (selectedPhotoRadio) {
+                        document.getElementById('selectedPhotoPackageId').value = selectedPhotoRadio.value;
+                        updatePackageDisplay('photo', true);
+                    }
+                    
+                    // Get selected video package
+                    const selectedVideoRadio = document.querySelector('input[name="videoPackageSelection"]:checked');
+                    if (selectedVideoRadio) {
+                        document.getElementById('selectedVideoPackageId').value = selectedVideoRadio.value;
+                        updatePackageDisplay('video', true);
+                    }
+                    
+                    // Show success message
+                    if (selectedPhotoRadio || selectedVideoRadio) {
+                        showPackageSelectionMessage();
+                    }
+                });
+            }
+        }
+        
+        // Update package display to show pending changes
+        function updatePackageDisplay(type, selected) {
+            if (type === 'photo') {
+                const photoLimit = document.getElementById('currentPhotoLimit');
+                if (photoLimit && selected) {
+                    photoLimit.innerHTML = '@Model.MaxPhotos photos <span class="badge bg-warning ms-2">Upgrade Pending</span>';
+                }
+            } else if (type === 'video') {
+                // Find the video package box by looking for the video icon, then get its parent's package-value
+                const packageBoxes = document.querySelectorAll('.package-info-box');
+                packageBoxes.forEach(box => {
+                    const videoIcon = box.querySelector('.bi-camera-video');
+                    if (videoIcon && selected) {
+                        const videoStatus = box.querySelector('.package-value');
+                        if (videoStatus) {
+                            videoStatus.innerHTML = '<span class="text-muted"><i class="bi bi-x-circle"></i> Disabled</span> <span class="badge bg-warning ms-2">Upgrade Pending</span>';
+                        }
+                    }
+                });
+            }
+        }
+        
+        // Show message about pending package application
+        function showPackageSelectionMessage() {
+            // Remove existing message if any
+            const existingMsg = document.querySelector('.package-selection-message');
+            if (existingMsg) existingMsg.remove();
+            
+            // Add new message
+            const message = document.createElement('div');
+            message.className = 'alert alert-warning alert-dismissible fade show package-selection-message';
+            message.innerHTML = `
+                <i class="bi bi-info-circle me-2"></i>
+                <strong>Packages selected!</strong> Click "Save Changes" to apply the selected packages to this listing.
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+            
+            const container = document.querySelector('.edit-listing-container');
+            const pageHeader = container.querySelector('.page-header');
+            pageHeader.after(message);
+            
+            // Scroll to message
+            message.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
     </script>
 }
 
@@ -604,5 +851,67 @@
         padding: 1rem 1.5rem;
         border-radius: 12px;
         box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .package-info-box {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        padding: 1.25rem;
+        border-radius: 12px;
+        text-align: center;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .package-icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+        color: #667eea;
+    }
+
+    .package-label {
+        display: block;
+        font-size: 0.875rem;
+        color: #666;
+        margin-bottom: 0.25rem;
+    }
+
+    .package-value {
+        display: block;
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #333;
+    }
+
+    .package-option {
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 12px;
+        margin-bottom: 10px;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .package-option:hover {
+        border-color: #667eea;
+        background-color: #f8f9ff;
+    }
+
+    .package-option input[type="radio"]:checked ~ label {
+        font-weight: 600;
+    }
+
+    .package-option input[type="radio"]:checked {
+        border-color: #667eea;
+    }
+
+    .package-selection-container {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     }
 </style>

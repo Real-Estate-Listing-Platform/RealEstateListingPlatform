@@ -83,4 +83,12 @@ public partial class Listing
     public virtual UserPackage? UserPackage { get; set; }
 
     public virtual ICollection<ListingBoost> ListingBoosts { get; set; } = new List<ListingBoost>();
+
+    public virtual ICollection<ListingView> ListingViews { get; set; } = new List<ListingView>();
+
+    public virtual ICollection<ListingSnapshot> ListingSnapshots { get; set; } = new List<ListingSnapshot>();
+    
+    // Tracking field for pending edit approval
+    public Guid? PendingSnapshotId { get; set; }
+    public virtual ListingSnapshot? PendingSnapshot { get; set; }
 }

@@ -228,6 +228,29 @@ public class PaymentService : IPaymentService
         return ServiceResult<Dictionary<string, int>>.SuccessResult(stats);
     }
 
+    public async Task<ServiceResult<TransactionDto>> GetTransactionByPayOSOrderCodeAsync(long orderCode)
+    {
+        var transaction = await _transactionRepository.GetTransactionByPayOSOrderCodeAsync(orderCode);
+        if (transaction == null)
+            return ServiceResult<TransactionDto>.FailureResult("Transaction not found");
+
+        return ServiceResult<TransactionDto>.SuccessResult(MapToDto(transaction));
+    }
+
+    public async Task<ServiceResult<TransactionDto>> UpdateTransactionPayOSReferenceAsync(Guid transactionId, string payOSTransactionId)
+    {
+        var transaction = await _transactionRepository.GetTransactionByIdAsync(transactionId);
+        if (transaction == null)
+            return ServiceResult<TransactionDto>.FailureResult("Transaction not found");
+
+        transaction.PayOSTransactionId = payOSTransactionId;
+        await _transactionRepository.UpdateTransactionAsync(transaction);
+
+        return ServiceResult<TransactionDto>.SuccessResult(
+            MapToDto(transaction),
+            "Transaction PayOS reference updated successfully");
+    }
+
     private TransactionDto MapToDto(Transaction transaction)
     {
         return new TransactionDto

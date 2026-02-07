@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using BLL.Services;
 using BLL.DTOs;
 using System.Security.Claims;
-using DAL.Repositories;
 using PayOS.Models.Webhooks;
 
 namespace RealEstateListingPlatform.Controllers
@@ -13,18 +12,15 @@ namespace RealEstateListingPlatform.Controllers
         private readonly IPaymentService _paymentService;
         private readonly IPackageService _packageService;
         private readonly IPayOSService _payOSService;
-        private readonly ITransactionRepository _transactionRepository;
 
         public PaymentController(
             IPaymentService paymentService, 
             IPackageService packageService,
-            IPayOSService payOSService,
-            ITransactionRepository transactionRepository)
+            IPayOSService payOSService)
         {
             _paymentService = paymentService;
             _packageService = packageService;
             _payOSService = payOSService;
-            _transactionRepository = transactionRepository;
         }
 
         private Guid GetCurrentUserId()
@@ -54,23 +50,30 @@ namespace RealEstateListingPlatform.Controllers
                 return RedirectToAction("Index", "Package");
             }
 
-            // Get payment link info
-            var dbTransaction = await _transactionRepository.GetTransactionWithDetailsAsync(transactionId);
-            if (dbTransaction != null && dbTransaction.PayOSCheckoutUrl != null)
+            // Only pending transactions can be processed
+            if (transaction.Data.Status != "Pending")
             {
-                ViewBag.CheckoutUrl = dbTransaction.PayOSCheckoutUrl;
-                ViewBag.OrderCode = dbTransaction.PayOSOrderCode;
-                
-                // Debug logging
-                Console.WriteLine($"[Payment/Process] Transaction ID: {transactionId}");
-                Console.WriteLine($"[Payment/Process] Checkout URL: {dbTransaction.PayOSCheckoutUrl}");
-                Console.WriteLine($"[Payment/Process] Order Code: {dbTransaction.PayOSOrderCode}");
-            }
-            else
-            {
-                Console.WriteLine($"[Payment/Process] WARNING: No PayOS data found for transaction {transactionId}");
+                if (transaction.Data.Status == "Completed")
+                {
+                    return RedirectToAction(nameof(Success), new { transactionId = transactionId });
+                }
+                TempData["Error"] = "This transaction cannot be processed";
+                return RedirectToAction("Index", "Package");
             }
 
+            // Get or create PayOS payment link
+            var paymentResult = await _paymentService.InitiatePaymentAsync(
+                transactionId, 
+                transaction.Data.PaymentMethod ?? "PAYOS"
+            );
+
+            if (!paymentResult.Success || string.IsNullOrEmpty(paymentResult.Data))
+            {
+                TempData["Error"] = paymentResult.Message ?? "Failed to create payment link";
+                return RedirectToAction("Index", "Package");
+            }
+
+            ViewBag.CheckoutUrl = paymentResult.Data;
             ViewBag.Transaction = transaction.Data;
             return View(transaction.Data);
         }
@@ -94,15 +97,8 @@ namespace RealEstateListingPlatform.Controllers
                 return Json(new { success = false, message = "Unauthorized access" });
             }
 
-            // Check current status from database
-            var dbTransaction = await _transactionRepository.GetTransactionWithDetailsAsync(transactionId);
-            if (dbTransaction == null)
-            {
-                return Json(new { success = false, message = "Transaction not found" });
-            }
-
             // If already completed, return success
-            if (dbTransaction.Status == "Completed")
+            if (transaction.Data.Status == "Completed")
             {
                 return Json(new { 
                     success = true, 
@@ -112,45 +108,8 @@ namespace RealEstateListingPlatform.Controllers
                 });
             }
 
-            // Check with PayOS if payment was made
-            if (dbTransaction.PayOSOrderCode.HasValue)
-            {
-                var paymentInfo = await _payOSService.GetPaymentInfoAsync(dbTransaction.PayOSOrderCode.Value);
-                
-                if (paymentInfo != null && paymentInfo.Status == "PAID")
-                {
-                    // Update transaction status
-                    var completeDto = new CompleteTransactionDto
-                    {
-                        TransactionId = transactionId,
-                        PaymentReference = paymentInfo.TransactionReference ?? paymentInfo.OrderCode.ToString(),
-                        Notes = "Payment verified via status check"
-                    };
-
-                    await _paymentService.CompleteTransactionAsync(completeDto);
-                    await _packageService.ActivateUserPackageAsync(transactionId);
-
-                    return Json(new { 
-                        success = true, 
-                        status = "Completed",
-                        message = "Payment completed successfully!",
-                        redirectUrl = Url.Action("Success", new { transactionId = transactionId })
-                    });
-                }
-                else if (paymentInfo != null && paymentInfo.Status == "CANCELLED")
-                {
-                    await _paymentService.FailTransactionAsync(transactionId, "Payment cancelled");
-                    
-                    return Json(new { 
-                        success = false, 
-                        status = "Cancelled",
-                        message = "Payment was cancelled",
-                        redirectUrl = Url.Action("Failed", new { transactionId = transactionId })
-                    });
-                }
-            }
-
-            // Still pending
+            // TODO: Check with PayOS if payment was made
+            // For now, return pending status
             return Json(new { 
                 success = true, 
                 status = "Pending",
@@ -186,9 +145,9 @@ namespace RealEstateListingPlatform.Controllers
         {
             try
             {
-                var transaction = await _transactionRepository.GetTransactionByPayOSOrderCodeAsync(orderCode);
+                var transactionResult = await _paymentService.GetTransactionByPayOSOrderCodeAsync(orderCode);
                 
-                if (transaction == null)
+                if (!transactionResult.Success || transactionResult.Data == null)
                 {
                     TempData["Error"] = "Transaction not found";
                     return RedirectToAction("Index", "Package");
@@ -200,11 +159,11 @@ namespace RealEstateListingPlatform.Controllers
                     
                     if (paymentInfo != null && paymentInfo.Status == "PAID")
                     {
-                        return RedirectToAction(nameof(Success), new { transactionId = transaction.Id });
+                        return RedirectToAction(nameof(Success), new { transactionId = transactionResult.Data.Id });
                     }
                 }
 
-                return RedirectToAction(nameof(Failed), new { transactionId = transaction.Id });
+                return RedirectToAction(nameof(Failed), new { transactionId = transactionResult.Data.Id });
             }
             catch (Exception ex)
             {
@@ -220,12 +179,12 @@ namespace RealEstateListingPlatform.Controllers
         {
             try
             {
-                var transaction = await _transactionRepository.GetTransactionByPayOSOrderCodeAsync(orderCode);
+                var transactionResult = await _paymentService.GetTransactionByPayOSOrderCodeAsync(orderCode);
                 
-                if (transaction != null)
+                if (transactionResult.Success && transactionResult.Data != null)
                 {
-                    await _paymentService.FailTransactionAsync(transaction.Id, "Payment cancelled by user");
-                    return RedirectToAction(nameof(Failed), new { transactionId = transaction.Id });
+                    await _paymentService.FailTransactionAsync(transactionResult.Data.Id, "Payment cancelled by user");
+                    return RedirectToAction(nameof(Failed), new { transactionId = transactionResult.Data.Id });
                 }
 
                 TempData["Error"] = "Transaction not found";

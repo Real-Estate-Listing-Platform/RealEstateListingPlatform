@@ -33,6 +33,8 @@ namespace DAL.Repositories.Implementation
                 .Include(l => l.Lister)
                 .Include(nameof(Listing.ListingMedia))
                 .Where(l => l.Status == "Published")
+                .OrderByDescending(l => l.IsBoosted)
+                .ThenByDescending(l => l.CreatedAt)
                 .ToListAsync();
         }
 
@@ -247,6 +249,72 @@ namespace DAL.Repositories.Implementation
         {
             return await _context.Listings
                 .AnyAsync(l => l.Id == listingId && l.ListerId == userId);
+        }
+
+        // Statistics Methods for Admin Dashboard
+        public async Task<int> GetTotalListingsCountAsync()
+        {
+            return await _context.Listings.CountAsync();
+        }
+
+        public async Task<int> GetListingsCountByStatusAsync(string status)
+        {
+            return await _context.Listings.CountAsync(l => l.Status == status);
+        }
+
+        public async Task<decimal> GetAverageListingPriceAsync()
+        {
+            var listings = await _context.Listings.Where(l => l.Status == "Published").ToListAsync();
+            if (!listings.Any()) return 0;
+            return listings.Average(l => l.Price);
+        }
+
+        public async Task<int> GetBoostedListingsCountAsync()
+        {
+            return await _context.Listings.CountAsync(l => l.IsBoosted);
+        }
+
+        public async Task<Dictionary<string, int>> GetListingsCountByStatusAsync()
+        {
+            return await _context.Listings
+                .GroupBy(l => l.Status ?? "Unknown")
+                .Select(g => new { Status = g.Key, Count = g.Count() })
+                .ToDictionaryAsync(x => x.Status, x => x.Count);
+        }
+
+        public async Task<List<(DateTime Date, int Count)>> GetListingsCreatedOverTimeAsync(int days)
+        {
+            var startDate = DateTime.UtcNow.AddDays(-days).Date;
+            
+            var listings = await _context.Listings
+                .Where(l => l.CreatedAt >= startDate)
+                .GroupBy(l => l.CreatedAt!.Value.Date)
+                .Select(g => new { Date = g.Key, Count = g.Count() })
+                .OrderBy(x => x.Date)
+                .ToListAsync();
+
+            return listings.Select(x => (x.Date, x.Count)).ToList();
+        }
+
+        public async Task<List<(Guid ListingId, string Title, int LeadCount, decimal Price, string ListerName)>> GetTopPerformingListingsAsync(int topCount)
+        {
+            var topListings = await _context.Listings
+                .Include(l => l.Lister)
+                .Include(l => l.Leads)
+                .Where(l => l.Status == "Published")
+                .Select(l => new
+                {
+                    ListingId = l.Id,
+                    Title = l.Title,
+                    LeadCount = l.Leads.Count,
+                    Price = l.Price,
+                    ListerName = l.Lister.DisplayName
+                })
+                .OrderByDescending(x => x.LeadCount)
+                .Take(topCount)
+                .ToListAsync();
+
+            return topListings.Select(x => (x.ListingId, x.Title, x.LeadCount, x.Price, x.ListerName)).ToList();
         }
     }
 }

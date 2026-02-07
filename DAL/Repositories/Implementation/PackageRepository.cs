@@ -286,4 +286,28 @@ public class PackageRepository : IPackageRepository
 
         await _context.SaveChangesAsync();
     }
+
+    // Statistics Methods for Admin Dashboard
+    public async Task<PackageStatistics> GetPackageStatisticsAsync()
+    {
+        var allUserPackages = await _context.UserPackages
+            .Include(up => up.Package)
+            .Include(up => up.Transaction)
+            .ToListAsync();
+
+        var stats = new PackageStatistics
+        {
+            TotalPurchased = allUserPackages.Count,
+            BoostPackages = allUserPackages.Count(up => up.Package.PackageType == "BOOST_LISTING"),
+            PhotoPacks = allUserPackages.Count(up => up.Package.PackageType == "PHOTO_PACK"),
+            AdditionalListings = allUserPackages.Count(up => up.Package.PackageType == "ADDITIONAL_LISTING"),
+            TotalRevenue = allUserPackages
+                .Where(up => up.Transaction != null && up.Transaction.Status == "Completed")
+                .Sum(up => up.Transaction!.Amount)
+        };
+
+        return stats;
+    }
 }
+
+

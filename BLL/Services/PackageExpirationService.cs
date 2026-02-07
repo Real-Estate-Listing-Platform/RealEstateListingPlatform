@@ -1,6 +1,8 @@
-using BLL.Services;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
-namespace RealEstateListingPlatform.Services
+namespace BLL.Services
 {
     public class PackageExpirationService : BackgroundService
     {

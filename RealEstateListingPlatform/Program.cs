@@ -17,6 +17,12 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IListingRepository, ListingRepository>();
 builder.Services.AddScoped<IPackageRepository, PackageRepository>();
 builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
+builder.Services.AddScoped<IListingViewRepository, ListingViewRepository>();
+builder.Services.AddScoped<ILeadRepository, LeadRepository>();
+builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
+builder.Services.AddScoped<IListingSnapshotRepository, ListingSnapshotRepository>();
+builder.Services.AddScoped<IReportRepository, ReportRepository>();
+builder.Services.AddScoped<IAuditLogRepository, AuditLogRepository>();
 
 // Services
 builder.Services.AddScoped<IUserService, UserService>();
@@ -27,6 +33,12 @@ builder.Services.AddScoped<IAuditService, AuditService>();
 builder.Services.AddScoped<IPackageService, PackageService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IPayOSService, PayOSService>();
+builder.Services.AddScoped<ILeadService, LeadService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<IAdminDashboardService, AdminDashboardService>();
+builder.Services.AddScoped<IAuditLogService, AuditLogService>();
+
+
 
 builder.Services.AddHttpClient();
 builder.Services.AddDistributedMemoryCache();

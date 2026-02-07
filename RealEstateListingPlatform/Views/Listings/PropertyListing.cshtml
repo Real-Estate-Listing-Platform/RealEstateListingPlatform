@@ -8,6 +8,43 @@
     var filterLocation = ViewData["FilterLocation"]?.ToString() ?? "";
     var filterPropertyTypes = (ViewData["FilterPropertyTypes"] as IEnumerable<string>)?.ToList() ?? new List<string>();
     var filterMaxPriceRaw = ViewData["FilterMaxPriceRaw"]?.ToString() ?? "";
+    var currentPage = (int)(ViewData["CurrentPage"] ?? 1);
+    var totalPages = (int)(ViewData["TotalPages"] ?? 1);
+    var totalCount = (int)(ViewData["TotalCount"] ?? 0);
+    var pageSize = (int)(ViewData["PageSize"] ?? 12);
+
+    string GeneratePaginationUrl(int page)
+    {
+        var routeValues = new Dictionary<string, string?>();
+        
+        if (!string.IsNullOrEmpty(formType))
+            routeValues["type"] = formType;
+        
+        if (!string.IsNullOrEmpty(filterLocation))
+            routeValues["location"] = filterLocation;
+        
+        if (!string.IsNullOrEmpty(filterMaxPriceRaw))
+            routeValues["maxPrice"] = filterMaxPriceRaw;
+        
+        routeValues["page"] = page.ToString();
+        
+        var queryParams = new List<string>();
+        
+        foreach (var kvp in routeValues)
+        {
+            if (!string.IsNullOrEmpty(kvp.Value))
+                queryParams.Add($"{kvp.Key}={Uri.EscapeDataString(kvp.Value)}");
+        }
+        
+        if (filterPropertyTypes != null && filterPropertyTypes.Any())
+        {
+            foreach (var type in filterPropertyTypes)
+                queryParams.Add($"propertyType={Uri.EscapeDataString(type)}");
+        }
+        
+        var queryString = string.Join("&", queryParams);
+        return $"{formAction}?{queryString}";
+    }
 }
 
 <div class="container pt-5 mt-5 mb-5">
@@ -60,19 +97,24 @@
         <main class="col-lg-9">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h3 class="fw-bold mb-0">@ViewData["Title"]</h3>
-                <span class="text-muted small">Find <b>@Model.Count()</b> result</span>
+                <span class="text-muted small">Showing <b>@((currentPage - 1) * pageSize + 1)</b>-<b>@Math.Min(currentPage * pageSize, totalCount)</b> of <b>@totalCount</b> results</span>
             </div>
 
             <div class="row g-4">
                 @foreach (var item in Model)
                 {
                     <div class="col-md-6 col-xl-4">
-                        <div class="card property-card h-100 border-0 shadow-sm overflow-hidden rounded-4">
+                        <div class="card property-card h-100 border-0 shadow-sm overflow-hidden rounded-4 @(item.IsBoosted ? "boosted-card" : "")">
                             <div class="position-relative">
                                 <img src="@item.ImageUrl" class="card-img-top" style="height: 200px; object-fit: cover;">
-                                <div class="position-absolute top-0 end-0 m-2">
-                                    <button class="btn btn-light btn-sm rounded-circle shadow-sm"><i class="bi bi-heart"></i></button>
-                                </div>
+                                @if (item.IsBoosted)
+                                {
+                                    <div class="position-absolute top-0 start-0 m-2">
+                                        <span class="badge bg-warning text-dark fw-bold">
+                                            <i class="bi bi-lightning-fill"></i> BOOSTED
+                                        </span>
+                                    </div>
+                                }
                                 <span class="badge @(item.TransactionType == "Sell" ? "bg-primary" : "bg-success") position-absolute bottom-0 start-0 m-3 rounded-pill px-3">
                                     @(item.TransactionType == "Sell" ? "Sale" : "Rent")
                                 </span>
@@ -97,6 +139,32 @@
                     </div>
                 }
             </div>
+
+            @if (totalPages > 1)
+            {
+                <nav aria-label="Page navigation" class="mt-5">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                            <a class="page-link" href="@GeneratePaginationUrl(currentPage - 1)" aria-label="Previous">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                        
+                        @for (int i = Math.Max(1, currentPage - 2); i <= Math.Min(totalPages, currentPage + 2); i++)
+                        {
+                            <li class="page-item @(i == currentPage ? "active" : "")">
+                                <a class="page-link" href="@GeneratePaginationUrl(i)">@i</a>
+                            </li>
+                        }
+
+                        <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                            <a class="page-link" href="@GeneratePaginationUrl(currentPage + 1)" aria-label="Next">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            }
         </main>
     </div>
 </div>
@@ -104,23 +172,29 @@
 @section Styles {
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
-
-        
         aside .card {
             transition: box-shadow 0.3s ease;
         }
 
-        
         .property-card {
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-            .property-card:hover {
-                transform: translateY(-8px);
-                box-shadow: 0 1rem 3rem rgba(0,0,0,0.1) !important;
-            }
+        .property-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 1rem 3rem rgba(0,0,0,0.1) !important;
+        }
 
-        
+        .boosted-card {
+            border: 2px solid #ffc107 !important;
+            box-shadow: 0 0.5rem 2rem rgba(255, 193, 7, 0.2) !important;
+        }
+
+        .boosted-card:hover {
+            transform: translateY(-12px);
+            box-shadow: 0 1.5rem 3.5rem rgba(255, 193, 7, 0.3) !important;
+        }
+
         .bg-success {
             background-color: #28a745 !important;
         }
@@ -129,7 +203,22 @@
             background-color: #0d6efd !important;
         }
 
-        
+        .pagination .page-link {
+            color: #0d6efd;
+            border-radius: 0.5rem;
+            margin: 0 0.2rem;
+            border: 1px solid #dee2e6;
+        }
+
+        .pagination .page-item.active .page-link {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+        }
+
+        .pagination .page-link:hover {
+            background-color: #e9ecef;
+        }
+
         @@media (max-width: 991.98px) {
             aside .card {
                 position: relative !important;

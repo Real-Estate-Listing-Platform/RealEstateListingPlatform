@@ -35,5 +35,14 @@ namespace DAL.Repositories
         // Validation Helpers
         Task<bool> ExistsAsync(Guid id);
         Task<bool> IsOwnerAsync(Guid listingId, Guid userId);
+
+        // Statistics Methods for Admin Dashboard
+        Task<int> GetTotalListingsCountAsync();
+        Task<int> GetListingsCountByStatusAsync(string status);
+        Task<decimal> GetAverageListingPriceAsync();
+        Task<int> GetBoostedListingsCountAsync();
+        Task<Dictionary<string, int>> GetListingsCountByStatusAsync();
+        Task<List<(DateTime Date, int Count)>> GetListingsCreatedOverTimeAsync(int days);
+        Task<List<(Guid ListingId, string Title, int LeadCount, decimal Price, string ListerName)>> GetTopPerformingListingsAsync(int topCount);
     }
 }

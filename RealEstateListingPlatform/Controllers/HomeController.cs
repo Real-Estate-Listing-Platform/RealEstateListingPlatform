@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using BLL.Services;
 using BLL.Services.Implementation;
-using DAL.Models;
 using Microsoft.AspNetCore.Mvc;
 using RealEstateListingPlatform.Models;
 
@@ -20,7 +19,9 @@ namespace RealEstateListingPlatform.Controllers
         public async Task<IActionResult> Index()
         {
             var listings = await _listingService.GetPublishedListingsAsync();
-            var properties = listings.Select(l => new ListingApprovalViewModel
+            
+            // Take first 6 listings (boosted ones will be first due to repository ordering)
+            var properties = listings.Take(6).Select(l => new ListingApprovalViewModel
             {
                 Id = l.Id,
                 Title = l.Title,
@@ -33,7 +34,7 @@ namespace RealEstateListingPlatform.Controllers
                 TransactionType = l.TransactionType == "Sell" ? "For Sale" : "For Rent",
                 ImageUrl = l.ListingMedia?.OrderBy(m => m.Id).Select(m => m.Url).FirstOrDefault()
                    ?? "https://tjh.com/wp-content/uploads/2023/06/TJH_HERO_TJH-HOME@2x-1.webp"
-            }).Take(6).ToList();
+            }).ToList();
 
             return View(properties);
         }

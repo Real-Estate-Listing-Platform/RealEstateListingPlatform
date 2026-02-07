@@ -190,7 +190,7 @@ public class PackageService : IPackageService
             RemainingListings = package.ListingCount,
             RemainingPhotos = package.PhotoLimit,
             VideoAvailable = package.AllowVideo,
-            RemainingBoosts = package.BoostDays.HasValue ? 1 : 0,
+            RemainingBoosts = package.PackageType == "BOOST_LISTING" ? 1 : null,
             ExpiresAt = package.DurationDays.HasValue 
                 ? DateTime.UtcNow.AddDays(package.DurationDays.Value) 
                 : null,
@@ -247,9 +247,6 @@ public class PackageService : IPackageService
         if (!userPackage.IsActive || userPackage.Status != "Active")
             return ServiceResult<bool>.FailureResult("Package is not active");
 
-        if (userPackage.RemainingListings.HasValue && userPackage.RemainingListings <= 0)
-            return ServiceResult<bool>.FailureResult("No remaining listings in package");
-
         var listing = await _listingRepository.GetByIdAsync(dto.ListingId);
         if (listing == null)
             return ServiceResult<bool>.FailureResult("Listing not found");
@@ -257,25 +254,77 @@ public class PackageService : IPackageService
         if (listing.ListerId != userId)
             return ServiceResult<bool>.FailureResult("Unauthorized");
 
-        // Apply package to listing
-        listing.UserPackageId = userPackage.Id;
-        listing.IsFreeListingorder = false;
-        listing.MaxPhotos = userPackage.Package.PhotoLimit ?? 5;
-        listing.AllowVideo = userPackage.VideoAvailable;
-
-        await _listingRepository.UpdateAsync(listing);
-
-        // Decrease remaining listings
-        if (userPackage.RemainingListings.HasValue)
+        // Determine package type and apply benefits accordingly
+        var packageType = userPackage.Package.PackageType;
+        
+        switch (packageType)
         {
-            userPackage.RemainingListings--;
-            if (userPackage.RemainingListings <= 0)
-                userPackage.Status = "Used";
+            case "PHOTO_PACK":
+                // Apply photo package - upgrade photo limit
+                if (userPackage.Package.PhotoLimit.HasValue)
+                {
+                    listing.MaxPhotos = Math.Max(listing.MaxPhotos, userPackage.Package.PhotoLimit.Value);
+                }
+                
+                // Decrease remaining photos if tracked
+                if (userPackage.RemainingPhotos.HasValue && userPackage.RemainingPhotos > 0)
+                {
+                    userPackage.RemainingPhotos--;
+                    if (userPackage.RemainingPhotos <= 0)
+                        userPackage.Status = "Used";
+                    
+                    await _packageRepository.UpdateUserPackageAsync(userPackage);
+                }
+                break;
 
-            await _packageRepository.UpdateUserPackageAsync(userPackage);
+            case "VIDEO_UPLOAD":
+                // Apply video package - enable video
+                listing.AllowVideo = true;
+                
+                // Mark video as consumed
+                userPackage.VideoAvailable = false;
+                userPackage.Status = "Used";
+                await _packageRepository.UpdateUserPackageAsync(userPackage);
+                break;
+
+            case "ADDITIONAL_LISTING":
+                // Apply listing package - this is typically done during listing creation
+                if (userPackage.RemainingListings.HasValue && userPackage.RemainingListings > 0)
+                {
+                    listing.UserPackageId = userPackage.Id;
+                    listing.IsFreeListingorder = false;
+                    
+                    // Apply any photo/video benefits from the listing package
+                    if (userPackage.Package.PhotoLimit.HasValue)
+                    {
+                        listing.MaxPhotos = Math.Max(listing.MaxPhotos, userPackage.Package.PhotoLimit.Value);
+                    }
+                    if (userPackage.VideoAvailable)
+                    {
+                        listing.AllowVideo = true;
+                    }
+                    
+                    // Decrease remaining listings
+                    userPackage.RemainingListings--;
+                    if (userPackage.RemainingListings <= 0)
+                        userPackage.Status = "Used";
+                    
+                    await _packageRepository.UpdateUserPackageAsync(userPackage);
+                }
+                else
+                {
+                    return ServiceResult<bool>.FailureResult("No remaining listings in package");
+                }
+                break;
+
+            default:
+                return ServiceResult<bool>.FailureResult($"Package type '{packageType}' cannot be applied to listings");
         }
 
-        return ServiceResult<bool>.SuccessResult(true, "Package applied to listing successfully");
+        // Update the listing with merged benefits
+        await _listingRepository.UpdateAsync(listing);
+
+        return ServiceResult<bool>.SuccessResult(true, $"{packageType} package applied successfully");
     }
 
     public async Task<ServiceResult<bool>> CanUserCreateListingAsync(Guid userId)
@@ -395,6 +444,10 @@ public class PackageService : IPackageService
         if (listing.ListerId != userId)
             return ServiceResult<ListingBoost>.FailureResult("Unauthorized");
 
+        // Validate listing status - only Published listings can be boosted
+        if (listing.Status != "Published")
+            return ServiceResult<ListingBoost>.FailureResult($"Only published listings can be boosted. Current status: {listing.Status}");
+
         // Check if already boosted
         var existingBoost = await _packageRepository.GetActiveBoostByListingIdAsync(dto.ListingId);
         if (existingBoost != null)
@@ -407,7 +460,7 @@ public class PackageService : IPackageService
             if (userPackage == null || userPackage.UserId != userId)
                 return ServiceResult<ListingBoost>.FailureResult("Invalid package");
 
-            if (userPackage.RemainingBoosts <= 0)
+            if (!userPackage.RemainingBoosts.HasValue || userPackage.RemainingBoosts <= 0)
                 return ServiceResult<ListingBoost>.FailureResult("No boost credits remaining");
         }
 

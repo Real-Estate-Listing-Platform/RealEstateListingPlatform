@@ -25,5 +25,29 @@ namespace DAL.Models
         public DbSet<UserPackage> UserPackages { get; set; } = default!;
         public DbSet<Transaction> Transactions { get; set; } = default!;
         public DbSet<ListingBoost> ListingBoosts { get; set; } = default!;
+
+        // View tracking
+        public DbSet<ListingView> ListingViews { get; set; } = default!;
+        
+        // Listing snapshots for approval tracking
+        public DbSet<ListingSnapshot> ListingSnapshots { get; set; } = default!;
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            // Configure Listing <-> ListingSnapshot relationships
+            modelBuilder.Entity<Listing>()
+                .HasMany(l => l.ListingSnapshots)
+                .WithOne(s => s.Listing)
+                .HasForeignKey(s => s.ListingId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Listing>()
+                .HasOne(l => l.PendingSnapshot)
+                .WithMany()
+                .HasForeignKey(l => l.PendingSnapshotId)
+                .OnDelete(DeleteBehavior.Restrict);
+        }
     }
 }

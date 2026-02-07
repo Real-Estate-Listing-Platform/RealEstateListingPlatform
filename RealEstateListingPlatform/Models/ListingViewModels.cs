@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using DAL.Models;
+using BLL.DTOs;
 
 namespace RealEstateListingPlatform.Models
 {
@@ -54,7 +54,7 @@ namespace RealEstateListingPlatform.Models
         public string? Status { get; set; }
         public DateTime? CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
-        public List<ListingMedia>? ExistingMedia { get; set; }
+        public List<ListingMediaDto>? ExistingMedia { get; set; }
         
         // Package-related properties
         public bool IsBoosted { get; set; }

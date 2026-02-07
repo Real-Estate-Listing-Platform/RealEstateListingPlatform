@@ -13,6 +13,7 @@ namespace RealEstateListingPlatform.Models
         public string ListerName { get; set; } = string.Empty;        
         public string Status { get; set; } = string.Empty;
         public string Area { get; set; } = string.Empty;
+        public string HouseNumber { get; set; } = string.Empty;
         public string StreetName { get; set; } = string.Empty;
         public string Address { get; set; } = string.Empty;
         public string District { get; set; } = string.Empty;
@@ -28,15 +29,17 @@ namespace RealEstateListingPlatform.Models
         public string ImageUrl { get; set; } = string.Empty;
         /// <summary>All image URLs for detail carousel (used on PropertyDetail). When null/empty, use ImageUrl.</summary>
         public List<string> ImageUrls { get; set; } = new();
+        public bool IsBoosted { get; set; }
+        public bool IsUpdate { get; set; } // True if this is an edit submission
         public string Currency { get; set; } = "VND";
         public string FormattedPrice
         {
             get
             {
                 if (Price >= 1000000000)
-                    return $"{Price / 1000000000:N1} B";
+                    return $"{Price / 1000000000:N1} tỷ";
                 if (Price >= 1000000)
-                    return $"{Price / 1000000:N0} M";
+                    return $"{Price / 1000000:N0} triệu";
                 return Price.ToString("N0") + " VNĐ";
             }
         }

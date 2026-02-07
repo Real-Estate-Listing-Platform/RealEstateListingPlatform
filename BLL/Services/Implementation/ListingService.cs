@@ -18,65 +18,74 @@ namespace BLL.Services.Implementation
         private readonly IAuditService _auditService;
         private readonly IPackageService _packageService;
         private readonly IUserRepository _userRepository;
+        private readonly IListingViewRepository _listingViewRepository;
+        private readonly IListingSnapshotRepository _listingSnapshotRepository;
 
         public ListingService(
             IListingRepository listingRepository,
             IPriceHistoryService priceHistoryService,
             IAuditService auditService,
             IPackageService packageService,
-            IUserRepository userRepository)
+            IUserRepository userRepository,
+            IListingViewRepository listingViewRepository,
+            IListingSnapshotRepository listingSnapshotRepository)
         { 
             _listingRepository = listingRepository;
             _priceHistoryService = priceHistoryService;
             _auditService = auditService;
             _packageService = packageService;
             _userRepository = userRepository;
+            _listingViewRepository = listingViewRepository;
+            _listingSnapshotRepository = listingSnapshotRepository;
         }
 
         // Existing methods
-        public async Task<List<Listing>> GetListings()
+        public async Task<List<ListingDto>> GetListings()
         {
-            return await _listingRepository.GetListings();
+            var listings = await _listingRepository.GetListings();
+            return listings.Select(MapToDto).ToList();
         }
 
-        public async Task<IEnumerable<Listing>> GetPendingListingsAsync()
+        public async Task<IEnumerable<ListingDto>> GetPendingListingsAsync()
         {
             var result = await _listingRepository.GetPendingListingsAsync();
             if (result == null)
             {
-                return Enumerable.Empty<Listing>();
+                return Enumerable.Empty<ListingDto>();
             }
-            return result;
+            return result.Select(MapToDto);
         }
 
-        public async Task<IEnumerable<Listing>> GetPublishedListingsAsync()
+        public async Task<IEnumerable<ListingDto>> GetPublishedListingsAsync()
         {
             var result = await _listingRepository.GetPublishedListingsAsync();
-            return result ?? Enumerable.Empty<Listing>();
+            return result?.Select(MapToDto) ?? Enumerable.Empty<ListingDto>();
         }
 
-        public async Task<IEnumerable<Listing>> GetPublishedByTypeAsync(string type)
+        public async Task<IEnumerable<ListingDto>> GetPublishedByTypeAsync(string type)
         {
             var listings = await _listingRepository.GetPublishedListingsAsync();
-            if (listings == null) return Enumerable.Empty<Listing>();
-            return listings.Where(l => l.TransactionType == type).ToList();
+            if (listings == null) return Enumerable.Empty<ListingDto>();
+            
+            // Filter by transaction type while maintaining boost ordering from repository
+            return listings.Where(l => l.TransactionType == type).Select(MapToDto).ToList();
         }
 
-        public async Task<IEnumerable<Listing>> GetByTypeAsync(String type)
+        public async Task<IEnumerable<ListingDto>> GetByTypeAsync(String type)
         {
             var listings = await _listingRepository.GetPendingListingsAsync();
             if (listings == null)
             {
-                return Enumerable.Empty<Listing>();
+                return Enumerable.Empty<ListingDto>();
             }
             var filteredListings = listings.Where(l => l.TransactionType == type);
-            return filteredListings;
+            return filteredListings.Select(MapToDto);
         }
 
-        public async Task<Listing> GetByIdAsync(Guid id)
+        public async Task<ListingDto> GetByIdAsync(Guid id)
         {
             var listing = await _listingRepository.GetByIdAsync(id);
-            return listing!;
+            return MapToDto(listing!);
         }
         
         public async Task<bool> ApproveListingAsync(Guid id)
@@ -84,12 +93,20 @@ namespace BLL.Services.Implementation
             var listing = await _listingRepository.GetByIdAsync(id);
             if (listing == null) return false;
 
-            if (listing == null || listing.Status != "PendingReview")
+            if (listing.Status != "PendingReview")
             {
                 return false;
             }
 
             listing.Status = "Published";
+            
+            // Clear pending snapshot if exists (changes are now approved)
+            if (listing.PendingSnapshotId.HasValue)
+            {
+                await _listingSnapshotRepository.DeleteSnapshotAsync(listing.PendingSnapshotId.Value);
+                listing.PendingSnapshotId = null;
+            }
+            
             await _listingRepository.UpdateAsync(listing);
             return true;
         }
@@ -104,18 +121,59 @@ namespace BLL.Services.Implementation
                 return false;
             }
 
-            // Refund package slot if listing was using a paid package
-            if (!listing.IsFreeListingorder && listing.UserPackageId.HasValue)
+            // If this is an edit rejection and we have a snapshot, restore original data
+            bool wasEdit = listing.PendingSnapshotId.HasValue;
+            if (wasEdit)
             {
-                var refundResult = await _packageService.RefundListingSlotAsync(listing.UserPackageId.Value);
-                if (refundResult.Success)
+                var snapshot = await _listingSnapshotRepository.GetSnapshotByIdAsync(listing.PendingSnapshotId.Value);
+                if (snapshot != null)
                 {
-                    // Log successful refund
-                    await _auditService.LogAsync("PackageRefunded", listing.ListerId, listing.Id, "Listing");
+                    // Restore original values
+                    listing.Title = snapshot.Title;
+                    listing.Description = snapshot.Description;
+                    listing.TransactionType = snapshot.TransactionType;
+                    listing.PropertyType = snapshot.PropertyType;
+                    listing.Price = snapshot.Price;
+                    listing.StreetName = snapshot.StreetName;
+                    listing.Ward = snapshot.Ward;
+                    listing.District = snapshot.District;
+                    listing.City = snapshot.City;
+                    listing.Area = snapshot.Area;
+                    listing.HouseNumber = snapshot.HouseNumber;
+                    listing.Latitude = snapshot.Latitude;
+                    listing.Longitude = snapshot.Longitude;
+                    listing.Bedrooms = snapshot.Bedrooms;
+                    listing.Bathrooms = snapshot.Bathrooms;
+                    listing.Floors = snapshot.Floors;
+                    listing.LegalStatus = snapshot.LegalStatus;
+                    listing.FurnitureStatus = snapshot.FurnitureStatus;
+                    listing.Direction = snapshot.Direction;
+                    
+                    // Restore to Published status since this was an edit
+                    listing.Status = "Published";
+                    
+                    // Clean up snapshot
+                    await _listingSnapshotRepository.DeleteSnapshotAsync(listing.PendingSnapshotId.Value);
+                    listing.PendingSnapshotId = null;
                 }
             }
+            else
+            {
+                // This is a new listing rejection
+                // Refund package slot if listing was using a paid package
+                if (!listing.IsFreeListingorder && listing.UserPackageId.HasValue)
+                {
+                    var refundResult = await _packageService.RefundListingSlotAsync(listing.UserPackageId.Value);
+                    if (refundResult.Success)
+                    {
+                        // Log successful refund
+                        await _auditService.LogAsync("PackageRefunded", listing.ListerId, listing.Id, "Listing");
+                    }
+                }
 
-            listing.Status = "Rejected";
+                listing.Status = "Rejected";
+            }
+            
             await _listingRepository.UpdateAsync(listing);
             
             // Log rejection audit
@@ -125,22 +183,22 @@ namespace BLL.Services.Implementation
         }
 
         // Create
-        public async Task<ServiceResult<Listing>> CreateListingAsync(ListingCreateDto dto, Guid listerId, List<IFormFile>? mediaFiles = null)
+        public async Task<ServiceResult<ListingDto>> CreateListingAsync(ListingCreateDto dto, Guid listerId, List<IFormFile>? mediaFiles = null)
         {
             // Validate input
             var validationResult = await ValidateListingDataAsync(dto);
             if (!validationResult.Success)
-                return ServiceResult<Listing>.FailureResult(validationResult.Message ?? "Validation failed", validationResult.Errors);
+                return ServiceResult<ListingDto>.FailureResult(validationResult.Message ?? "Validation failed", validationResult.Errors);
 
             // Check if user can create a listing
             var canCreateResult = await _packageService.CanUserCreateListingAsync(listerId);
             if (!canCreateResult.Success)
-                return ServiceResult<Listing>.FailureResult(canCreateResult.Message ?? "Cannot create listing");
+                return ServiceResult<ListingDto>.FailureResult(canCreateResult.Message ?? "Cannot create listing");
 
             // Get user to check free listing availability
             var user = await _userRepository.GetUserById(listerId);
             if (user == null)
-                return ServiceResult<Listing>.FailureResult("User not found");
+                return ServiceResult<ListingDto>.FailureResult("User not found");
 
             // Check for active free listings
             var userListings = await _listingRepository.GetListingsByListerIdAsync(listerId);
@@ -160,7 +218,7 @@ namespace BLL.Services.Implementation
             {
                 var activePackages = await _packageService.GetActiveUserPackagesAsync(listerId);
                 if (!activePackages.Success || activePackages.Data == null)
-                    return ServiceResult<Listing>.FailureResult("No available packages found");
+                    return ServiceResult<ListingDto>.FailureResult("No available packages found");
 
                 var availablePackage = activePackages.Data
                     .FirstOrDefault(up => 
@@ -170,7 +228,7 @@ namespace BLL.Services.Implementation
                         up.RemainingListings > 0);
 
                 if (availablePackage == null)
-                    return ServiceResult<Listing>.FailureResult("No available listing package found. Please purchase an additional listing package.");
+                    return ServiceResult<ListingDto>.FailureResult("No available listing package found. Please purchase an additional listing package.");
 
                 userPackageId = availablePackage.Id;
                 maxPhotos = availablePackage.Package.PhotoLimit ?? 5;
@@ -245,26 +303,26 @@ namespace BLL.Services.Implementation
             // Log audit trail
             await _auditService.LogAsync("ListingCreated", listerId, listing.Id, "Listing");
 
-            return ServiceResult<Listing>.SuccessResult(created, "Listing created successfully");
+            return ServiceResult<ListingDto>.SuccessResult(MapToDto(created), "Listing created successfully");
         }
 
         // Read (Enhanced)
-        public async Task<ServiceResult<Listing>> GetListingByIdAsync(Guid id)
+        public async Task<ServiceResult<ListingDto>> GetListingByIdAsync(Guid id)
         {
             var listing = await _listingRepository.GetByIdAsync(id);
             if (listing == null)
-                return ServiceResult<Listing>.FailureResult("Listing not found");
+                return ServiceResult<ListingDto>.FailureResult("Listing not found");
 
-            return ServiceResult<Listing>.SuccessResult(listing);
+            return ServiceResult<ListingDto>.SuccessResult(MapToDto(listing));
         }
 
-        public async Task<ServiceResult<List<Listing>>> GetMyListingsAsync(Guid listerId)
+        public async Task<ServiceResult<List<ListingDto>>> GetMyListingsAsync(Guid listerId)
         {
             var listings = await _listingRepository.GetListingsByListerIdAsync(listerId);
-            return ServiceResult<List<Listing>>.SuccessResult(listings);
+            return ServiceResult<List<ListingDto>>.SuccessResult(listings.Select(MapToDto).ToList());
         }
 
-        public async Task<ServiceResult<PaginatedResult<Listing>>> GetMyListingsFilteredAsync(Guid listerId, ListingFilterParameters parameters)
+        public async Task<ServiceResult<PaginatedResult<ListingDto>>> GetMyListingsFilteredAsync(Guid listerId, ListingFilterParameters parameters)
         {
             var (items, totalCount) = await _listingRepository.GetListingsFilteredAsync(
                 listerId,
@@ -281,37 +339,46 @@ namespace BLL.Services.Implementation
                 parameters.PageNumber,
                 parameters.PageSize);
 
-            var paginatedResult = new PaginatedResult<Listing>
+            var paginatedResult = new PaginatedResult<ListingDto>
             {
-                Items = items,
+                Items = items.Select(MapToDto).ToList(),
                 PageNumber = parameters.PageNumber,
                 PageSize = parameters.PageSize,
                 TotalCount = totalCount
             };
 
-            return ServiceResult<PaginatedResult<Listing>>.SuccessResult(paginatedResult);
+            return ServiceResult<PaginatedResult<ListingDto>>.SuccessResult(paginatedResult);
         }
 
-        public async Task<ServiceResult<Listing>> GetListingWithMediaAsync(Guid id)
+        public async Task<ServiceResult<ListingDto>> GetListingWithMediaAsync(Guid id)
         {
             var listing = await _listingRepository.GetListingWithMediaAsync(id);
             if (listing == null)
-                return ServiceResult<Listing>.FailureResult("Listing not found");
+                return ServiceResult<ListingDto>.FailureResult("Listing not found");
 
-            return ServiceResult<Listing>.SuccessResult(listing);
+            return ServiceResult<ListingDto>.SuccessResult(MapToDto(listing));
         }
 
         // Update
-        public async Task<ServiceResult<Listing>> UpdateListingAsync(Guid id, ListingUpdateDto dto, Guid userId, List<IFormFile>? mediaFiles = null)
+        public async Task<ServiceResult<ListingDto>> UpdateListingAsync(Guid id, ListingUpdateDto dto, Guid userId, List<IFormFile>? mediaFiles = null)
         {
             // Check if listing exists
-            var listing = await _listingRepository.GetByIdAsync(id);
+            var listing = await _listingRepository.GetListingWithMediaAsync(id);
             if (listing == null)
-                return ServiceResult<Listing>.FailureResult("Listing not found");
+                return ServiceResult<ListingDto>.FailureResult("Listing not found");
 
             // Verify ownership
             if (!await CanUserModifyListingAsync(id, userId))
-                return ServiceResult<Listing>.FailureResult("You are not authorized to modify this listing");
+                return ServiceResult<ListingDto>.FailureResult("You are not authorized to modify this listing");
+
+            // If listing is already published, create a snapshot and set status to PendingReview
+            bool wasPublished = listing.Status == "Published";
+            if (wasPublished && listing.PendingSnapshotId == null)
+            {
+                var snapshot = await _listingSnapshotRepository.CreateSnapshotAsync(listing);
+                listing.PendingSnapshotId = snapshot.Id;
+                listing.Status = "PendingReview";
+            }
 
             // Track price changes
             if (dto.Price.HasValue && dto.Price.Value != listing.Price)
@@ -356,9 +423,14 @@ namespace BLL.Services.Implementation
             }
 
             // Log audit trail
-            await _auditService.LogAsync("ListingUpdated", userId, listing.Id, "Listing");
+            var auditAction = wasPublished ? "ListingEditedPendingApproval" : "ListingUpdated";
+            await _auditService.LogAsync(auditAction, userId, listing.Id, "Listing");
 
-            return ServiceResult<Listing>.SuccessResult(listing, "Listing updated successfully");
+            var message = wasPublished 
+                ? "Listing updated and submitted for review. Changes will be visible after admin approval." 
+                : "Listing updated successfully";
+
+            return ServiceResult<ListingDto>.SuccessResult(MapToDto(listing), message);
         }
 
         public async Task<ServiceResult<bool>> SubmitForReviewAsync(Guid id, Guid userId)
@@ -471,10 +543,18 @@ namespace BLL.Services.Implementation
             return ServiceResult<bool>.SuccessResult(true, "Media deleted successfully");
         }
 
-        public async Task<ServiceResult<List<ListingMedia>>> GetListingMediaAsync(Guid listingId)
+        public async Task<ServiceResult<List<ListingMediaDto>>> GetListingMediaAsync(Guid listingId)
         {
             var media = await _listingRepository.GetMediaByListingIdAsync(listingId);
-            return ServiceResult<List<ListingMedia>>.SuccessResult(media);
+            var mediaDtos = media.Select(m => new ListingMediaDto
+            {
+                Id = m.Id,
+                ListingId = m.ListingId,
+                MediaType = m.MediaType ?? "image",
+                Url = m.Url ?? string.Empty,
+                SortOrder = m.SortOrder ?? 0
+            }).ToList();
+            return ServiceResult<List<ListingMediaDto>>.SuccessResult(mediaDtos);
         }
 
         // Validation
@@ -568,6 +648,266 @@ namespace BLL.Services.Implementation
             {
                 // Log error but don't throw
             }
+        }
+
+        // View Tracking
+        public async Task<ServiceResult<bool>> TrackViewAsync(Guid listingId, Guid? userId, string? ipAddress, string? userAgent)
+        {
+            try
+            {
+                // Check if listing exists
+                var listing = await _listingRepository.GetByIdAsync(listingId);
+                if (listing == null)
+                    return ServiceResult<bool>.FailureResult("Listing not found");
+
+                // Prevent duplicate tracking (same user/IP within 30 minutes)
+                var hasRecentView = await _listingViewRepository.HasRecentViewAsync(listingId, userId, ipAddress, 30);
+                if (hasRecentView)
+                    return ServiceResult<bool>.SuccessResult(true, "View already tracked recently");
+
+                var view = new ListingView
+                {
+                    ListingId = listingId,
+                    UserId = userId,
+                    IpAddress = ipAddress,
+                    UserAgent = userAgent,
+                    ViewedAt = DateTime.UtcNow
+                };
+
+                await _listingViewRepository.AddViewAsync(view);
+
+                return ServiceResult<bool>.SuccessResult(true, "View tracked successfully");
+            }
+            catch (Exception ex)
+            {
+                return ServiceResult<bool>.FailureResult($"Failed to track view: {ex.Message}");
+            }
+        }
+
+        public async Task<ServiceResult<ListingViewStats>> GetListingViewStatsAsync(Guid listingId, int days = 30)
+        {
+            try
+            {
+                var listing = await _listingRepository.GetByIdAsync(listingId);
+                if (listing == null)
+                    return ServiceResult<ListingViewStats>.FailureResult("Listing not found");
+
+                var now = DateTime.UtcNow;
+                var startDate = now.AddDays(-days).Date;
+                var endDate = now.Date;
+
+                // Get total views
+                var totalViews = await _listingViewRepository.GetTotalViewsAsync(listingId);
+
+                // Get views for different periods
+                var viewsToday = await _listingViewRepository.GetViewCountByDateRangeAsync(
+                    listingId, now.Date, now);
+                
+                var viewsThisWeek = await _listingViewRepository.GetViewCountByDateRangeAsync(
+                    listingId, now.AddDays(-7), now);
+                
+                var viewsThisMonth = await _listingViewRepository.GetViewCountByDateRangeAsync(
+                    listingId, now.AddDays(-30), now);
+
+                // Get daily statistics for chart
+                var dailyStats = await _listingViewRepository.GetDailyViewStatisticsAsync(
+                    listingId, startDate, endDate);
+
+                var stats = new ListingViewStats
+                {
+                    ListingId = listingId,
+                    TotalViews = totalViews,
+                    ViewsToday = viewsToday,
+                    ViewsThisWeek = viewsThisWeek,
+                    ViewsThisMonth = viewsThisMonth,
+                    DailyStats = dailyStats.Select(s => new DailyViewStat
+                    {
+                        Date = s.Date.ToString("yyyy-MM-dd"),
+                        Views = s.ViewCount
+                    }).ToList()
+                };
+
+                return ServiceResult<ListingViewStats>.SuccessResult(stats);
+            }
+            catch (Exception ex)
+            {
+                return ServiceResult<ListingViewStats>.FailureResult($"Failed to get view statistics: {ex.Message}");
+            }
+        }
+
+        // Snapshot and Comparison for Edit Approvals
+        public async Task<ServiceResult<ListingComparisonDto>> GetListingComparisonAsync(Guid listingId)
+        {
+            try
+            {
+                var listing = await _listingRepository.GetListingWithMediaAsync(listingId);
+                if (listing == null)
+                    return ServiceResult<ListingComparisonDto>.FailureResult("Listing not found");
+
+                // Get snapshot if exists (for edited listings)
+                var snapshot = await _listingSnapshotRepository.GetPendingSnapshotForListingAsync(listingId);
+                
+                var comparison = new ListingComparisonDto
+                {
+                    ListingId = listingId,
+                    ListerName = listing.Lister?.DisplayName ?? "Unknown User",
+                    SubmittedAt = listing.UpdatedAt ?? listing.CreatedAt ?? DateTime.UtcNow,
+                    IsUpdate = snapshot != null,
+                    Current = MapToListingDataDto(listing)
+                };
+
+                if (snapshot != null)
+                {
+                    comparison.Original = MapSnapshotToListingDataDto(snapshot);
+                }
+
+                return ServiceResult<ListingComparisonDto>.SuccessResult(comparison);
+            }
+            catch (Exception ex)
+            {
+                return ServiceResult<ListingComparisonDto>.FailureResult($"Failed to get comparison: {ex.Message}");
+            }
+        }
+
+        public async Task<ServiceResult<bool>> ClearPendingSnapshotAsync(Guid listingId)
+        {
+            try
+            {
+                var listing = await _listingRepository.GetByIdAsync(listingId);
+                if (listing == null)
+                    return ServiceResult<bool>.FailureResult("Listing not found");
+
+                if (listing.PendingSnapshotId.HasValue)
+                {
+                    await _listingSnapshotRepository.DeleteSnapshotAsync(listing.PendingSnapshotId.Value);
+                    listing.PendingSnapshotId = null;
+                    await _listingRepository.UpdateAsync(listing);
+                }
+
+                return ServiceResult<bool>.SuccessResult(true);
+            }
+            catch (Exception ex)
+            {
+                return ServiceResult<bool>.FailureResult($"Failed to clear snapshot: {ex.Message}");
+            }
+        }
+
+        private ListingDataDto MapToListingDataDto(Listing listing)
+        {
+            return new ListingDataDto
+            {
+                Title = listing.Title,
+                Description = listing.Description,
+                TransactionType = listing.TransactionType,
+                PropertyType = listing.PropertyType,
+                Price = listing.Price,
+                StreetName = listing.StreetName,
+                Ward = listing.Ward,
+                District = listing.District,
+                City = listing.City,
+                Area = listing.Area,
+                HouseNumber = listing.HouseNumber,
+                Latitude = listing.Latitude,
+                Longitude = listing.Longitude,
+                Bedrooms = listing.Bedrooms,
+                Bathrooms = listing.Bathrooms,
+                Floors = listing.Floors,
+                LegalStatus = listing.LegalStatus,
+                FurnitureStatus = listing.FurnitureStatus,
+                Direction = listing.Direction,
+                MediaUrls = listing.ListingMedia?
+                    .OrderBy(m => m.SortOrder ?? int.MaxValue)
+                    .Select(m => m.Url ?? string.Empty)
+                    .ToList() ?? new List<string>()
+            };
+        }
+
+        private ListingDataDto MapSnapshotToListingDataDto(ListingSnapshot snapshot)
+        {
+            var mediaUrls = new List<string>();
+            if (!string.IsNullOrEmpty(snapshot.MediaUrlsJson))
+            {
+                try
+                {
+                    mediaUrls = System.Text.Json.JsonSerializer.Deserialize<List<string>>(snapshot.MediaUrlsJson) ?? new List<string>();
+                }
+                catch
+                {
+                    // Ignore deserialization errors
+                }
+            }
+
+            return new ListingDataDto
+            {
+                Title = snapshot.Title,
+                Description = snapshot.Description,
+                TransactionType = snapshot.TransactionType,
+                PropertyType = snapshot.PropertyType,
+                Price = snapshot.Price,
+                StreetName = snapshot.StreetName,
+                Ward = snapshot.Ward,
+                District = snapshot.District,
+                City = snapshot.City,
+                Area = snapshot.Area,
+                HouseNumber = snapshot.HouseNumber,
+                Latitude = snapshot.Latitude,
+                Longitude = snapshot.Longitude,
+                Bedrooms = snapshot.Bedrooms,
+                Bathrooms = snapshot.Bathrooms,
+                Floors = snapshot.Floors,
+                LegalStatus = snapshot.LegalStatus,
+                FurnitureStatus = snapshot.FurnitureStatus,
+                Direction = snapshot.Direction,
+                MediaUrls = mediaUrls
+            };
+        }
+
+        private ListingDto MapToDto(Listing listing)
+        {
+            return new ListingDto
+            {
+                Id = listing.Id,
+                ListerId = listing.ListerId,
+                Title = listing.Title,
+                Description = listing.Description,
+                TransactionType = listing.TransactionType,
+                PropertyType = listing.PropertyType,
+                Price = listing.Price,
+                StreetName = listing.StreetName,
+                Ward = listing.Ward,
+                District = listing.District,
+                City = listing.City,
+                Area = listing.Area,
+                HouseNumber = listing.HouseNumber,
+                Latitude = listing.Latitude,
+                Longitude = listing.Longitude,
+                Bedrooms = listing.Bedrooms,
+                Bathrooms = listing.Bathrooms,
+                Floors = listing.Floors,
+                LegalStatus = listing.LegalStatus,
+                FurnitureStatus = listing.FurnitureStatus,
+                Direction = listing.Direction,
+                Status = listing.Status,
+                ExpirationDate = listing.ExpirationDate,
+                CreatedAt = listing.CreatedAt,
+                UpdatedAt = listing.UpdatedAt,
+                UserPackageId = listing.UserPackageId,
+                IsFreeListingorder = listing.IsFreeListingorder,
+                MaxPhotos = listing.MaxPhotos,
+                AllowVideo = listing.AllowVideo,
+                IsBoosted = listing.IsBoosted,
+                ListerName = listing.Lister?.DisplayName,
+                ListerEmail = listing.Lister?.Email,
+                ListingMedia = listing.ListingMedia?.Select(m => new ListingMediaDto
+                {
+                    Id = m.Id,
+                    ListingId = m.ListingId,
+                    MediaType = m.MediaType ?? "image",
+                    Url = m.Url ?? string.Empty,
+                    SortOrder = m.SortOrder ?? 0
+                }).ToList() ?? new List<ListingMediaDto>(),
+                PendingSnapshotId = listing.PendingSnapshotId
+            };
         }
     }
 }

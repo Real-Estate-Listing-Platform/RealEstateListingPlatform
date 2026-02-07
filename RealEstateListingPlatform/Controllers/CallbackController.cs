@@ -1,6 +1,5 @@
 ﻿using BLL.DTOs;
 using BLL.Services;
-using DAL.Repositories;
 using Microsoft.AspNetCore.Mvc;
 using PayOS.Models.Webhooks;
 
@@ -13,18 +12,15 @@ namespace RealEstateListingPlatform.Controllers
         private readonly IPaymentService _paymentService;
         private readonly IPackageService _packageService;
         private readonly IPayOSService _payOSService;
-        private readonly ITransactionRepository _transactionRepository;
 
         public CallbackController(
             IPaymentService paymentService,
             IPackageService packageService,
-            IPayOSService payOSService,
-            ITransactionRepository transactionRepository)
+            IPayOSService payOSService)
         {
             _paymentService = paymentService;
             _packageService = packageService;
             _payOSService = payOSService;
-            _transactionRepository = transactionRepository;
         }
 
         [HttpPost("payment")]
@@ -34,12 +30,25 @@ namespace RealEstateListingPlatform.Controllers
 
             var verifiedData = await _payOSService.VerifyWebhookDataAsync(webhook);
 
-            // Find transaction by order code
-            var transaction = await _transactionRepository.GetTransactionByPayOSOrderCodeAsync(verifiedData.OrderCode);
+            // Find transaction by order code using PaymentService
+            var transactionResult = await _paymentService.GetTransactionByPayOSOrderCodeAsync(verifiedData.OrderCode);
+            
+            if (!transactionResult.Success || transactionResult.Data == null)
+            {
+                Console.WriteLine($"[PayOS Webhook] Transaction not found for OrderCode: {verifiedData.OrderCode}");
+                return BadRequest("Transaction not found");
+            }
+
+            var transaction = transactionResult.Data;
 
             // Process based on status
             if (verifiedData.Code == "00")
             {
+                // Update PayOS transaction reference
+                await _paymentService.UpdateTransactionPayOSReferenceAsync(
+                    transaction.Id,
+                    verifiedData.Reference ?? verifiedData.OrderCode.ToString()
+                );
 
                 var completeDto = new CompleteTransactionDto
                 {
@@ -47,9 +56,6 @@ namespace RealEstateListingPlatform.Controllers
                     PaymentReference = verifiedData.Reference ?? verifiedData.OrderCode.ToString(),
                     Notes = $"PayOS webhook - Payment successful"
                 };
-
-                transaction.PayOSTransactionId = verifiedData.Reference;
-                await _transactionRepository.UpdateTransactionAsync(transaction);
 
                 var completeResult = await _paymentService.CompleteTransactionAsync(completeDto);
 
