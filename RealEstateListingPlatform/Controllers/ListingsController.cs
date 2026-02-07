@@ -1,12 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using BLL.Services;
+using BLL.DTOs;
 using RealEstateListingPlatform.Models;
-
 
 namespace RealEstateListingPlatform.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
     public class ListingsController : Controller
     {
 
@@ -14,18 +12,16 @@ namespace RealEstateListingPlatform.Controllers
 
         public ListingsController(IListingService listingService) => _listingService = listingService;
 
-        [HttpGet]
         public async Task<IActionResult> Index()
         {
-            //return View(await _listingService.GetListings());
-            return Ok(await _listingService.GetListings());
+            return View(await _listingService.GetListings());
         }
 
-        [HttpGet("/Listings/AllListings")]
-        public async Task<IActionResult> AllListings([FromQuery] List<string>? propertyType = null, [FromQuery] string? location = null, [FromQuery] string? maxPrice = null)
+        public async Task<IActionResult> AllListings(List<string>? propertyType = null, string? location = null, string? maxPrice = null, int page = 1, int pageSize = 12)
         {
             var listings = await _listingService.GetPublishedListingsAsync();
             decimal? maxPriceNum = TryParseMaxPrice(maxPrice);
+            int totalCount = 0;
 
             if (listings != null)
             {
@@ -49,9 +45,18 @@ namespace RealEstateListingPlatform.Controllers
 
                 if (maxPriceNum.HasValue && maxPriceNum.Value > 0)
                     listings = listings.Where(l => l.Price <= maxPriceNum.Value).ToList();
+                
+                // Re-apply boost ordering after filtering (boosted listings first)
+                listings = listings.OrderByDescending(l => l.IsBoosted)
+                                 .ThenByDescending(l => l.CreatedAt)
+                                 .ToList();
             }
 
-            var viewModel = (listings?.Select(l => new ListingApprovalViewModel
+            // Calculate pagination
+            totalCount = listings?.Count() ?? 0;
+            var paginatedListings = listings?.Skip((page - 1) * pageSize).Take(pageSize).ToList() ?? new List<ListingDto>();
+
+            var viewModel = paginatedListings.Select(l => new ListingApprovalViewModel
             {
                 Id = l.Id,
                 Title = l.Title,
@@ -59,9 +64,9 @@ namespace RealEstateListingPlatform.Controllers
                 Price = l.Price,
                 PropertyType = l.PropertyType ?? "N/A",
                 TransactionType = l.TransactionType == "Sell" ? "For Sale" : "For Rent",
-                ListerName = l.Lister?.DisplayName ?? "Unknown User",
+                ListerName = l.ListerName ?? "Unknown User",
                 Area = l.Area ?? "0",
-                Address = $"{l.StreetName}, {l.Ward}, {l.District}, {l.City}",
+                Address = $"{l.HouseNumber}, {l.StreetName}, {l.Ward}, {l.District}, {l.City}",
                 Bedrooms = l.Bedrooms,
                 Bathrooms = l.Bathrooms,
                 Floors = l.Floors,
@@ -70,8 +75,9 @@ namespace RealEstateListingPlatform.Controllers
                 Direction = l.Direction ?? "N/A",
                 CreatedAt = l.CreatedAt ?? DateTime.Now,
                 ImageUrl = l.ListingMedia?.OrderBy(m => m.Id).Select(m => m.Url).FirstOrDefault()
-                           ?? "https://tjh.com/wp-content/uploads/2023/06/TJH_HERO_TJH-HOME@2x-1.webp"
-            }) ?? Enumerable.Empty<ListingApprovalViewModel>()).ToList();
+                           ?? "https://tjh.com/wp-content/uploads/2023/06/TJH_HERO_TJH-HOME@2x-1.webp",
+                IsBoosted = l.IsBoosted
+            }).ToList();
 
             var titleParts = new List<string>();
             if (propertyType != null && propertyType.Count > 0) titleParts.Add(string.Join(", ", propertyType));
@@ -84,15 +90,20 @@ namespace RealEstateListingPlatform.Controllers
             ViewData["FilterMaxPriceRaw"] = maxPrice;
             ViewData["FilterFormAction"] = Url.Action("AllListings");
             ViewData["FilterFormType"] = (string?)null;
+            ViewData["CurrentPage"] = page;
+            ViewData["PageSize"] = pageSize;
+            ViewData["TotalCount"] = totalCount;
+            ViewData["TotalPages"] = (int)Math.Ceiling(totalCount / (double)pageSize);
             return View("PropertyListing", viewModel);
         }
 
-        [HttpGet("{type}")] 
-        public async Task<IActionResult> BrowseListings(string type, [FromQuery] List<string>? propertyType = null, [FromQuery] string? location = null, [FromQuery] string? maxPrice = null)
+        [Route("Listings/{type}")]
+        public async Task<IActionResult> BrowseListings(string type, List<string>? propertyType = null, string? location = null, string? maxPrice = null, int page = 1, int pageSize = 12)
         {
-            string dbType = type.Equals("Sale", StringComparison.OrdinalIgnoreCase) ? "Sell" : "Rent";
+            string dbType = type.Equals("Sell", StringComparison.OrdinalIgnoreCase) ? "Sell" : "Rent";
             var listings = await _listingService.GetPublishedByTypeAsync(dbType);
             decimal? maxPriceNum = TryParseMaxPrice(maxPrice);
+            int totalCount = 0;
 
             if (listings != null)
             {
@@ -114,9 +125,18 @@ namespace RealEstateListingPlatform.Controllers
                 }
                 if (maxPriceNum.HasValue && maxPriceNum.Value > 0)
                     listings = listings.Where(l => l.Price <= maxPriceNum.Value).ToList();
+                
+                // Re-apply boost ordering after filtering (boosted listings first)
+                listings = listings.OrderByDescending(l => l.IsBoosted)
+                                 .ThenByDescending(l => l.CreatedAt)
+                                 .ToList();
             }
 
-            var viewModel = (listings?.Select(l => new ListingApprovalViewModel
+            // Calculate pagination
+            totalCount = listings?.Count() ?? 0;
+            var paginatedListings = listings?.Skip((page - 1) * pageSize).Take(pageSize).ToList() ?? new List<ListingDto>();
+
+            var viewModel = paginatedListings.Select(l => new ListingApprovalViewModel
             {
                 Id = l.Id,
                 Title = l.Title,
@@ -124,9 +144,9 @@ namespace RealEstateListingPlatform.Controllers
                 Price = l.Price,
                 PropertyType = l.PropertyType ?? "N/A",
                 TransactionType = l.TransactionType ?? dbType,
-                ListerName = l.Lister?.DisplayName ?? "Unknown User",
+                ListerName = l.ListerName ?? "Unknown User",
                 Area = l.Area ?? "0",
-                Address = $"{l.StreetName}, {l.Ward}, {l.District}, {l.City}",
+                Address = $"{l.HouseNumber}, {l.StreetName}, {l.Ward}, {l.District}, {l.City}",
                 Bedrooms = l.Bedrooms,
                 Bathrooms = l.Bathrooms,
                 Floors = l.Floors,
@@ -135,20 +155,25 @@ namespace RealEstateListingPlatform.Controllers
                 Direction = l.Direction ?? "N/A",
                 CreatedAt = l.CreatedAt ?? DateTime.Now,
                 ImageUrl = l.ListingMedia?.OrderBy(m => m.Id).Select(m => m.Url).FirstOrDefault()
-                           ?? "https://tjh.com/wp-content/uploads/2023/06/TJH_HERO_TJH-HOME@2x-1.webp"
-            }) ?? Enumerable.Empty<ListingApprovalViewModel>()).ToList();
+                           ?? "https://tjh.com/wp-content/uploads/2023/06/TJH_HERO_TJH-HOME@2x-1.webp",
+                IsBoosted = l.IsBoosted
+            }).ToList();
 
-            ViewData["Title"] = type.Equals("Sale", StringComparison.OrdinalIgnoreCase) ? "Property for Sale" : "Property for Rent";
+            ViewData["Title"] = type.Equals("Sell", StringComparison.OrdinalIgnoreCase) ? "Property for Sale" : "Property for Rent";
             ViewData["FilterPropertyTypes"] = propertyType ?? new List<string>();
             ViewData["FilterLocation"] = location;
             ViewData["FilterMaxPrice"] = maxPriceNum;
             ViewData["FilterMaxPriceRaw"] = maxPrice;
             ViewData["FilterFormAction"] = Url.Action("BrowseListings");
             ViewData["FilterFormType"] = type;
+            ViewData["CurrentPage"] = page;
+            ViewData["PageSize"] = pageSize;
+            ViewData["TotalCount"] = totalCount;
+            ViewData["TotalPages"] = (int)Math.Ceiling(totalCount / (double)pageSize);
             return View("PropertyListing", viewModel);
         }
 
-        [HttpGet("PropertyDetail/{id}")]
+        [Route("Listings/PropertyDetail/{id}")]
         public async Task<IActionResult> PropertyDetail(Guid id)
         {
             var property = await _listingService.GetByIdAsync(id);
@@ -156,6 +181,22 @@ namespace RealEstateListingPlatform.Controllers
             if (property == null)
             {
                 return NotFound(); 
+            }
+
+            // Track the view (properly await to prevent DbContext disposal issues)
+            try
+            {
+                var userId = User.Identity?.IsAuthenticated == true 
+                    ? Guid.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString())
+                    : (Guid?)null;
+                var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
+                var userAgent = HttpContext.Request.Headers["User-Agent"].ToString();
+                
+                await _listingService.TrackViewAsync(id, userId, ipAddress, userAgent);
+            }
+            catch (Exception)
+            {
+                // Silently ignore view tracking errors - don't break the page
             }
    
             var mediaUrls = property.ListingMedia?.OrderBy(m => m.Id).Select(m => m.Url ?? string.Empty).ToList() ?? new List<string>();
@@ -170,9 +211,9 @@ namespace RealEstateListingPlatform.Controllers
                 Price = property.Price,
                 PropertyType = property.PropertyType ?? "N/A",
                 TransactionType = property.TransactionType ?? "N/A",
-                ListerName = property.Lister?.DisplayName ?? "Unknown User",
+                ListerName = property.ListerName ?? "Unknown User",
                 Area = property.Area ?? "0",
-                Address = $"{property.StreetName}, {property.Ward}, {property.District}, {property.City}",
+                Address = $"{property.HouseNumber}, {property.StreetName}, {property.Ward}, {property.District}, {property.City}",
                 Bedrooms = property.Bedrooms,
                 Bathrooms = property.Bathrooms,
                 Floors = property.Floors,
@@ -186,118 +227,6 @@ namespace RealEstateListingPlatform.Controllers
 
             ViewData["Title"] = "Property Detail";
             return View("PropertyDetail", viewModel); 
-        }
-
-        public IActionResult ForSale()
-        {
-            var properties = GetMockProperties().Where(p => p.Status == "For Sale").ToList();
-            ViewData["Title"] = "Nhà đất bán";
-            return View("PropertyListing", properties);
-        }
-
-        public IActionResult ForRent()
-        {
-            var properties = GetMockProperties().Where(p => p.Status == "For Rent").ToList();
-            ViewData["Title"] = "Nhà đất cho thuê";
-            return View("PropertyListing", properties);
-        }
-
-        public IActionResult PropertyDetail(int id)
-        {
-
-            var property = GetMockProperties().FirstOrDefault(p => p.Id == id);
-
-            if (property == null)
-            {
-                return NotFound();
-            }
-
-            ViewData["Title"] = property.Title ?? "Property";
-            return View(property);
-        }
-
-        private static List<PropertyViewModel> GetMockProperties()
-        {
-            return new List<PropertyViewModel>
-            {
-                new PropertyViewModel {
-                    Id = 1,
-                    Title = "Luxury Apartment with River View",
-                    Location = "District 2, Ho Chi Minh City",
-                    Price = 25000000000,
-                    Bedrooms = 2,
-                    Bathrooms = 1,
-                    Area = 75, Status = "For Sale",
-                    ImageUrl = "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=400&q=80"
-                },
-
-                new PropertyViewModel {
-                    Id = 2,
-                    Title = "Modern Villa with Private Pool",
-                    Location = "Thao Dien, District 2",
-                    Price = 12000000000,
-                    Bedrooms = 4,
-                    Bathrooms = 3,
-                    Area = 350, Status = "For Sale",
-                    ImageUrl = "https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=400&q=80"
-                },
-
-                new PropertyViewModel {
-                    Id = 3,
-                    Title = "Cozy Studio near Metro",
-                    Location = "Binh Thanh District",
-                    Price = 850000000,
-                    Bedrooms = 1,
-                    Bathrooms = 1,
-                    Area = 45, Status = "For Sale",
-                    ImageUrl = "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=400&q=80"
-                },
-                new PropertyViewModel {
-                    Id = 4,
-                    Title = "Penthouse Sky Garden with Infinity Pool",
-                    Location = "District 7, Ho Chi Minh City",
-                    Price = 45000000000,
-                    Bedrooms = 5,
-                    Bathrooms = 4,
-                    Area = 450, Status = "For Sale",
-                    ImageUrl = "https://images.unsplash.com/photo-1512918728675-ed5a9ecdebfd?auto=format&fit=crop&w=800&q=80"
-                },
-
-                new PropertyViewModel {
-                    Id = 5,
-                    Title = "Shophouse Vinhome Central Park",
-                    Location = "Binh Thanh District, HCM",
-                    Price = 18500000000,
-                    Bedrooms = 3,
-                    Bathrooms = 2,
-                    Area = 120, Status = "For Sale",
-                    ImageUrl = "https://images.unsplash.com/photo-1582407947304-fd86f028f716?auto=format&fit=crop&w=800&q=80"
-                },
-
-                new PropertyViewModel {
-                    Id = 6,
-                    Title = "Green Garden Villa - Eco Village",
-                    Location = "Thu Duc City, Ho Chi Minh",
-                    Price = 28000000000,
-                    Bedrooms = 4,
-                    Bathrooms = 3,
-                    Area = 280, Status = "For Sale",
-                    ImageUrl = "https://res.cloudinary.com/dw4e01qx8/f_auto,q_auto/images/scgcqaofgcyewluey2xi"
-                },
-
-                new PropertyViewModel {
-                    Id = 7, Title = "Apartment Studio Vinhomes Grand Park",
-                    Location = "District 9, Ho Chi Minh", Price = 7000000,
-                    Bedrooms = 1, Bathrooms = 1, Area = 35, Status = "For Rent",
-                    ImageUrl = "https://images.ctfassets.net/pg6xj64qk0kh/2r4QaBLvhQFH1mPGljSdR9/39b737d93854060282f6b4a9b9893202/camden-paces-apartments-buckhead-ga-terraces-living-room-with-den_1.jpg"
-                },
-                new PropertyViewModel {
-                    Id = 8, Title = "Office High Level - Bitexco Tower",
-                    Location = "District 1, Ho Chi Minh", Price = 120000000,
-                    Bedrooms = 0, Bathrooms = 2, Area = 150, Status = "For Rent",
-                    ImageUrl = "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=800&q=80"
-                }
-            };
         }
 
         private static decimal? TryParseMaxPrice(string? s)

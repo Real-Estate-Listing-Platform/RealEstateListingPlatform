@@ -13,5 +13,14 @@ namespace DAL.Repositories
         Task<bool> UserExists(string email);
         IQueryable<User> GetUsersQueryable();
         Task<int> DeleteUnverifiedUsersOlderThanAsync(DateTime threshold, CancellationToken cancellationToken = default);
+
+        // Statistics Methods for Admin Dashboard
+        Task<int> GetTotalUsersCountAsync();
+        Task<int> GetNewUsersCountAsync(DateTime startDate);
+        Task<int> GetActiveListersCountAsync();
+        Task<int> GetActiveSeekersCountAsync();
+        Task<int> GetVerifiedUsersCountAsync();
+        Task<int> GetUnverifiedUsersCountAsync();
+        Task<List<(DateTime Date, int Count)>> GetUserRegistrationsOverTimeAsync(int days);
     }
 }

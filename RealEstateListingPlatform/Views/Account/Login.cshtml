@@ -10,7 +10,7 @@
     <a asp-action="Register" class="js-auth-switch">Sign Up</a>
 </div>
 
-<form id="account" method="post" class="auth-form">
+<form id="account" asp-action="Login" asp-controller="Account" method="post" class="auth-form">
     <div asp-validation-summary="ModelOnly" class="text-danger mb-3" role="alert"></div>
 
     <div class="mb-2">
